@@ -53,7 +53,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
 
         return _thunk
 
-    env = make_env()
+    env = make_env()()
 
     ob_space = env.observation_space.shape
     nw, nh, nc = ob_space
