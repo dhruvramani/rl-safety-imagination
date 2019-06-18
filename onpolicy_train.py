@@ -44,15 +44,14 @@ def discount_with_done(rewards, done, GAMMA):
         discounted.append(r)
     return discounted[::-1]
 
+def make_env():
+    def _thunk():
+        env = gym.make("SideEffectsSokoban-v0")
+        return env
+
+    return _thunk
 
 def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log_path = './logs'):
-    def make_env():
-        def _thunk():
-            env = gym.make("SideEffectsSokoban-v0")
-            return env
-
-        return _thunk
-
     env = make_env()()
 
     ob_space = env.observation_space.shape
@@ -166,4 +165,8 @@ if __name__ == '__main__':
     else:
         raise ValueError('Must specify the algo name as either a2c or i2a')
 
-    train(policy, args.algo, summarize=True, log_path=args.algo + '_logs')
+    env = make_env()()
+    ob_space = env.observation_space.shape
+    ac_space = env.action_space
+    print(ob_space, ac_space)
+    #train(policy, args.algo, summarize=True, log_path=args.algo + '_logs')
