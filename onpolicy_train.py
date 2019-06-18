@@ -55,7 +55,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
     env = make_env()()
 
     ob_space = env.observation_space.shape
-    nw, nh, nc = ob_space
+    nc, nw, nh = ob_space
     ac_space = env.action_space
 
     obs = env.reset()

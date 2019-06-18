@@ -20,7 +20,7 @@ def cat_entropy(logits):
 # Basic baseline policy
 class CnnPolicy(object):
     def __init__(self, sess, ob_space, ac_space, reuse=True):
-        nw, nh, nc = ob_space
+        nc, nw, nh = ob_space
 
         nact = ac_space.n
         X = tf.placeholder(tf.float32, [None, nw, nh, nc]) #obs
