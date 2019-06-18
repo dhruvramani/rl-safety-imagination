@@ -166,7 +166,7 @@ if __name__ == '__main__':
         raise ValueError('Must specify the algo name as either a2c or i2a')
 
     env = make_env()()
-    ob_space = env.observation_space.shape
-    ac_space = env.action_space
-    print(ob_space, ac_space)
-    #train(policy, args.algo, summarize=True, log_path=args.algo + '_logs')
+    #ob_space = env.observation_space.shape
+    #ac_space = env.action_space
+    #print(ob_space, ac_space)
+    train(policy, args.algo, summarize=True, log_path=args.algo + '_logs')
