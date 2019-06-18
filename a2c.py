@@ -23,7 +23,7 @@ class CnnPolicy(object):
         nc, nw, nh = ob_space
 
         nact = ac_space.n
-        X = tf.placeholder(tf.float32, [None, nw, nh, nc]) #obs
+        X = tf.placeholder(tf.float32, [nw, nh]) #obs
         with tf.variable_scope("model", reuse=reuse):
             conv1 = tf.layers.conv2d(activation=tf.nn.relu,
                                         inputs=X,
