@@ -131,7 +131,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
             rewards = discount_with_done(rewards, mb_done, GAMMA)
         mb_rewards = rewards
 
-        mb_rewards = mb_rewards.flatten()
+        mb_rewards = np.asarray(mb_rewards, np.float32).flatten()
         mb_actions = mb_actions.flatten()
         mb_values = mb_values.flatten()
         mb_masks = mb_masks.flatten()
