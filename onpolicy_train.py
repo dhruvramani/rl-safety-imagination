@@ -40,7 +40,7 @@ def discount_with_done(rewards, done, GAMMA):
     discounted = []
     r = 0
     for reward, done in zip(rewards[::-1], done[::-1]):
-        r = reward + GAMMA * r * (1.-done)
+        r = reward + GAMMA * r * (1. - done)
         discounted.append(r)
     return discounted[::-1]
 
@@ -124,12 +124,11 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
 
         #discount/bootstrap off value fn
         for n, (rewards, d, value) in enumerate(zip(mb_rewards, mb_done, last_values)):
-            rewards = rewards.tolist()
-            d = d.tolist()
-            if d[-1] == 0:
-                rewards = discount_with_done(rewards+[value], d+[0], GAMMA)[:-1]
+            rewards = mb_rewards.tolist()
+            if d == 0:
+                rewards = discount_with_done(rewards+[value], mb_done, GAMMA)[:-1]
             else:
-                rewards = discount_with_done(rewards, d, GAMMA)
+                rewards = discount_with_done(rewards, mb_done, GAMMA)
             mb_rewards[n] = rewards
 
         mb_rewards = mb_rewards.flatten()
