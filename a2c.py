@@ -23,7 +23,7 @@ class CnnPolicy(object):
         nc, nw, nh = ob_space
 
         nact = ac_space.n
-        X = tf.placeholder(tf.float32, [None, nw, nh, nc]) #obs
+        X = tf.placeholder(tf.float32, [None, nw, nh]) #obs
         with tf.variable_scope("model", reuse=reuse):
             conv1 = tf.layers.conv2d(activation=tf.nn.relu,
                                         inputs=X,
@@ -142,7 +142,7 @@ class ActorCritic(object):
 
     # generic training code for one iteration.
     def train(self, obs, rewards, masks, actions, values, step, summary_op=None):
-        print(obs.shape)
+        print("Placeholder shape : ", obs.shape)
         advs = rewards - values
 
         feed_dict = {
