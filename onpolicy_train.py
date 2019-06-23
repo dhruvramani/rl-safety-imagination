@@ -120,14 +120,12 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
         mb_masks = mb_done[:-1]
         #mb_done = mb_done[1:]
 
-        _ = input(" ")
         last_values = actor_critic.critique(ob_np).tolist()
 
         #discount/bootstrap off value fn
         #for n, (rewards, d, value) in enumerate(zip(mb_rewards, mb_done, last_values)):
         rewards = mb_rewards.tolist()
         if mb_done[-1] == 0:
-            print("Done called")
             rewards = discount_with_done(rewards + [last_values], mb_done, GAMMA)[:-1]
         else:
             rewards = discount_with_done(rewards, mb_done, GAMMA)
@@ -137,8 +135,6 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
         mb_actions = mb_actions.flatten()
         mb_values = mb_values.flatten()
         mb_masks = mb_masks.flatten()
-
-        print(mb_rewards.shape, mb_values.shape)
 
 
         if summarize:
@@ -152,7 +148,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
 
         if update % LOG_INTERVAL == 0 or update == 1:
             print('%i): %.4f, %.4f, %.4f' % (update, policy_loss, value_loss, policy_entropy))
-            print(final_rewards.mean())
+            print(final_rewards)
 
         if update % SAVE_INTERVAL == 0:
             print('Saving model')
