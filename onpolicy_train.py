@@ -59,6 +59,8 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
     ac_space = env.action_space
 
     obs = env.reset()
+    ob_np = np.copy(obs)
+    ob_np = np.expand_dims(ob_np, axis=3)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -118,7 +120,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
         mb_masks = mb_done[:-1]
         mb_done = mb_done[1:]
 
-        last_values = actor_critic.critique(obs).tolist()
+        last_values = actor_critic.critique(ob_np).tolist()
 
         #discount/bootstrap off value fn
         for n, (rewards, d, value) in enumerate(zip(mb_rewards, mb_done, last_values)):
