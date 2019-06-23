@@ -98,6 +98,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
             mb_values.append(values)
             mb_done.append(done)
 
+            env.render()
             obs, rewards, done, _ = env.step(actions)
 
             # TODO - SEE Properly
