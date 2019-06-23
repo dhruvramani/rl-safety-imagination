@@ -142,6 +142,7 @@ class ActorCritic(object):
 
     # generic training code for one iteration.
     def train(self, obs, rewards, masks, actions, values, step, summary_op=None):
+        print(obs.shape)
         advs = rewards - values
 
         feed_dict = {
