@@ -88,7 +88,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
         mb_obs, mb_rewards, mb_actions, mb_values, mb_done = [],[],[],[],[]
         for n in range(N_STEPS):
             ob_np = np.copy(obs)
-            ob_np = np.expand_dims(obs_np, axis=3)
+            ob_np = np.expand_dims(ob_np, axis=3)
             actions, values, _ = actor_critic.act(obs[0])
 
             mb_obs.append(obs_np)
