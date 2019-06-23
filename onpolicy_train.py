@@ -126,7 +126,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
         #for n, (rewards, d, value) in enumerate(zip(mb_rewards, mb_done, last_values)):
         rewards = mb_rewards.tolist()
         if mb_done[-1] == 0:
-            rewards = discount_with_done(rewards + [value], mb_done, GAMMA)[:-1]
+            rewards = discount_with_done(rewards + [mb_values], mb_done, GAMMA)[:-1]
         else:
             rewards = discount_with_done(rewards, mb_done, GAMMA)
         mb_rewards = rewards
