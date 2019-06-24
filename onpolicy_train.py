@@ -17,7 +17,7 @@ from a2c import CnnPolicy, get_actor_critic
 #from ai_safety_gridworlds.environments.side_effects_sokoban import SideEffectsSokobanEnvironment
 
 
-N_ENVS = 1 # 16
+N_ENVS = 16
 N_STEPS = 5
 LEVEL = 0
 NOOPS = False
