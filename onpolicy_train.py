@@ -62,7 +62,9 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
     ac_space = envs.action_space
 
     obs = envs.reset()
-    print(obs.shape)
+    ob_np = np.copy(obs)
+    ob_np = np.squeeze(ob_np, axis=1)
+    ob_np = np.expand_dims(ob_np, axis=3)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -91,9 +93,14 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
         # mb stands for mini batch
         mb_obs, mb_rewards, mb_actions, mb_values, mb_dones = [],[],[],[],[]
         for n in range(N_STEPS):
-            actions, values, _ = actor_critic.act(obs)
+            
+            ob_np = np.copy(obs)
+            ob_np = np.squeeze(ob_np, axis=1)
+            ob_np = np.expand_dims(ob_np, axis=3)
 
-            mb_obs.append(np.copy(obs))
+            actions, values, _ = actor_critic.act(ob_np)
+
+            mb_obs.append(ob_np)
             mb_actions.append(actions)
             mb_values.append(values)
             mb_dones.append(dones)
@@ -119,7 +126,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
         mb_masks = mb_dones[:, :-1]
         mb_dones = mb_dones[:, 1:]
 
-        last_values = actor_critic.critique(obs).tolist()
+        last_values = actor_critic.critique(ob_np).tolist()
 
         #discount/bootstrap off value fn
         for n, (rewards, d, value) in enumerate(zip(mb_rewards, mb_dones, last_values)):
