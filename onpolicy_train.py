@@ -2,23 +2,20 @@
 # substitutable generic policy that can be trained. This allows to easily
 # substitute in the I2A policy as opposed to the basic CNN one.
 
-import gym
-import argparse
+
 import numpy as np
-import safe_grid_gym
-from tqdm import tqdm
 import tensorflow as tf
+from tqdm import tqdm
+import argparse
+import safe_grid_gym
 
-#from common.minipacman import MiniPacman
-#from common.multiprocessing_env import SubprocVecEnv
 #from i2a import I2aPolicy
-
+from utils import SubprocVecEnv
 from a2c import CnnPolicy, get_actor_critic
 
 
-
-N_ENVS  = 1
-N_STEPS = 10
+N_ENVS = 16
+N_STEPS=5
 
 # Total number of iterations (taking into account number of environments and
 # number of steps). You wish to train for.
@@ -36,11 +33,11 @@ SAVE_PATH = 'weights'
 # resulting in a different reward function giving the agent different behavior.
 REWARD_MODE = 'regular'
 
-def discount_with_done(rewards, done, GAMMA):
+def discount_with_dones(rewards, dones, GAMMA):
     discounted = []
     r = 0
-    for reward, done in zip(rewards[::-1], done[::-1]):
-        r = reward + GAMMA * r * (1. - done)
+    for reward, done in zip(rewards[::-1], dones[::-1]):
+        r = reward + GAMMA * r * (1.-done)
         discounted.append(r)
     return discounted[::-1]
 
@@ -52,21 +49,20 @@ def make_env():
     return _thunk
 
 def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log_path = './logs'):
-    env = make_env()()
+    envs = [make_env() for i in range(N_ENVS)]
+    envs = SubprocVecEnv(envs)
 
-    ob_space = env.observation_space.shape
-    nc, nw, nh = ob_space
-    ac_space = env.action_space
+    ob_space = envs.observation_space.shape
+    nw, nh, nc = ob_space
+    ac_space = envs.action_space
 
-    obs = env.reset()
-    ob_np = np.copy(obs)
-    ob_np = np.expand_dims(ob_np, axis=3)
+    obs = envs.reset()
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    actor_critic = get_actor_critic(sess, N_STEPS, ob_space,
+    actor_critic = get_actor_critic(sess, N_ENVS, N_STEPS, ob_space,
             ac_space, policy, summarize)
     if load_path is not None:
         actor_critic.load(load_path)
@@ -77,66 +73,62 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
 
     sess.run(tf.global_variables_initializer())
 
-    batch_ob_shape = (N_STEPS, nw, nh, nc)
+    batch_ob_shape = (N_ENVS * N_STEPS, nw, nh, nc)
 
-    done = False
-    nbatch = N_STEPS
+    dones = [False for _ in range(N_ENVS)]
+    nbatch = N_ENVS * N_STEPS
 
-    episode_rewards = 0
-    final_rewards   = 0
+    episode_rewards = np.zeros((N_ENVS, ))
+    final_rewards   = np.zeros((N_ENVS, ))
 
     for update in tqdm(range(load_count + 1, TOTAL_TIMESTEPS + 1)):
         # mb stands for mini batch
-        mb_obs, mb_rewards, mb_actions, mb_values, mb_done = [],[],[],[],[]
+        mb_obs, mb_rewards, mb_actions, mb_values, mb_dones = [],[],[],[],[]
         for n in range(N_STEPS):
-            ob_np = np.copy(obs)
-            ob_np = np.expand_dims(ob_np, axis=3)
-            actions, values, _ = actor_critic.act(ob_np)
+            actions, values, _ = actor_critic.act(obs)
 
-            mb_obs.append(ob_np)
+            mb_obs.append(np.copy(obs))
             mb_actions.append(actions)
             mb_values.append(values)
-            mb_done.append(done)
+            mb_dones.append(dones)
 
-            env.render(mode="human")
-            obs, rewards, done, _ = env.step(actions)
+            obs, rewards, dones, _ = envs.step(actions)
 
-            # TODO - SEE Properly
             episode_rewards += rewards
-            masks = 1 - int(done)
+            masks = 1 - np.array(dones)
             final_rewards *= masks
             final_rewards += (1 - masks) * episode_rewards
             episode_rewards *= masks
 
             mb_rewards.append(rewards)
 
-        mb_done.append(done)
+        mb_dones.append(dones)
 
         #batch of steps to batch of rollouts
-        mb_obs = np.asarray(mb_obs, dtype=np.float32).reshape(batch_ob_shape) #.swapaxes(1, 0).
-        mb_rewards = np.asarray(mb_rewards, dtype=np.float32)#.swapaxes(1, 0)
-        mb_actions = np.asarray(mb_actions, dtype=np.int32)#.swapaxes(1, 0)
-        mb_values = np.asarray(mb_values, dtype=np.float32)#.swapaxes(1, 0)
-        mb_done = np.asarray(mb_done, dtype=np.bool)#.swapaxes(1, 0)
-        mb_masks = mb_done[:-1]
-        #mb_done = mb_done[1:]
+        mb_obs = np.asarray(mb_obs, dtype=np.float32).swapaxes(1, 0).reshape(batch_ob_shape)
+        mb_rewards = np.asarray(mb_rewards, dtype=np.float32).swapaxes(1, 0)
+        mb_actions = np.asarray(mb_actions, dtype=np.int32).swapaxes(1, 0)
+        mb_values = np.asarray(mb_values, dtype=np.float32).swapaxes(1, 0)
+        mb_dones = np.asarray(mb_dones, dtype=np.bool).swapaxes(1, 0)
+        mb_masks = mb_dones[:, :-1]
+        mb_dones = mb_dones[:, 1:]
 
-        last_values = actor_critic.critique(ob_np).tolist()
+        last_values = actor_critic.critique(obs).tolist()
 
         #discount/bootstrap off value fn
-        #for n, (rewards, d, value) in enumerate(zip(mb_rewards, mb_done, last_values)):
-        rewards = mb_rewards.tolist()
-        if mb_done[-1] == 0:
-            rewards = discount_with_done(rewards + [last_values], mb_done, GAMMA)[:-1]
-        else:
-            rewards = discount_with_done(rewards, mb_done, GAMMA)
-        mb_rewards = rewards
+        for n, (rewards, d, value) in enumerate(zip(mb_rewards, mb_dones, last_values)):
+            rewards = rewards.tolist()
+            d = d.tolist()
+            if d[-1] == 0:
+                rewards = discount_with_dones(rewards+[value], d+[0], GAMMA)[:-1]
+            else:
+                rewards = discount_with_dones(rewards, d, GAMMA)
+            mb_rewards[n] = rewards
 
-        mb_rewards = np.asarray(mb_rewards, np.float32).flatten()
+        mb_rewards = mb_rewards.flatten()
         mb_actions = mb_actions.flatten()
         mb_values = mb_values.flatten()
         mb_masks = mb_masks.flatten()
-
 
         if summarize:
             loss, policy_loss, value_loss, policy_entropy, _, summary = actor_critic.train(mb_obs,
@@ -148,7 +140,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
                     mb_rewards, mb_masks, mb_actions, mb_values, update)
 
         if update % LOG_INTERVAL == 0 or update == 1:
-            print('%i => Policy Loss : %.4f, Value Loss : %.4f, Policy Entropy : %.4f, Final Reward : %.4f' % (update, policy_loss, value_loss, policy_entropy, final_rewards))
+            print('%i => Policy Loss : %.4f, Value Loss : %.4f, Policy Entropy : %.4f, Final Reward : %.4f' % (update, policy_loss, value_loss, policy_entropy, final_rewards.mean()))
 
         if update % SAVE_INTERVAL == 0:
             print('Saving model')
@@ -169,8 +161,5 @@ if __name__ == '__main__':
     else:
         raise ValueError('Must specify the algo name as either a2c or i2a')
 
-    env = make_env()()
-    #ob_space = env.observation_space.shape
-    #ac_space = env.action_space
-    #print(ob_space, ac_space)
     train(policy, args.algo, summarize=True, log_path=args.algo + '_logs')
+

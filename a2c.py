@@ -19,8 +19,8 @@ def cat_entropy(logits):
 
 # Basic baseline policy
 class CnnPolicy(object):
-    def __init__(self, sess, ob_space, ac_space, reuse=True):
-        nc, nw, nh = ob_space
+    def __init__(self, sess, ob_space, ac_space, nbatch, nsteps, reuse=True):
+        nw, nh, nc = ob_space
 
         nact = ac_space.n
         X = tf.placeholder(tf.float32, [None, nw, nh, nc]) #obs
@@ -80,20 +80,20 @@ class CnnPolicy(object):
     def get_inputs(self):
         return [self.X]
 
-
 # generic graph for a2c.
 class ActorCritic(object):
-    def __init__(self, sess, policy, ob_space, ac_space, nsteps, should_summarize):
+    def __init__(self, sess, policy, ob_space, ac_space, nenvs, nsteps, should_summary):
         self.sess = sess
 
         nact = ac_space.n
+        nbatch = nenvs * nsteps
 
-        self.actions = tf.placeholder(tf.int32, [nsteps])
-        self.advantages = tf.placeholder(tf.float32, [nsteps])
-        self.rewards = tf.placeholder(tf.float32, [nsteps])
+        self.actions = tf.placeholder(tf.int32, [nbatch])
+        self.advantages = tf.placeholder(tf.float32, [nbatch])
+        self.rewards = tf.placeholder(tf.float32, [nbatch])
 
-        self.step_model = policy(self.sess, ob_space, ac_space, reuse=False)
-        self.train_model = policy(self.sess, ob_space, ac_space, reuse=True)
+        self.step_model = policy(self.sess, ob_space, ac_space, nenvs, 1, reuse=False)
+        self.train_model = policy(self.sess, ob_space, ac_space, nenvs*nsteps, nsteps, reuse=True)
 
         # Negative log probability of actions
         neglogpac = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.train_model.pi,
@@ -119,7 +119,7 @@ class ActorCritic(object):
         self.opt = trainer.apply_gradients(grads)
 
         # Tensorboard
-        if should_summarize:
+        if should_summary:
             tf.summary.scalar('Loss', self.loss)
             tf.summary.scalar('Policy gradient loss', self.pg_loss)
             tf.summary.scalar('Value function loss', self.vf_loss)
@@ -189,6 +189,9 @@ class ActorCritic(object):
         self.saver.restore(self.sess, full_path)
 
 
-def get_actor_critic(sess, nsteps, ob_space, ac_space, policy, should_summarize=True):
-    actor_critic = ActorCritic(sess, policy, ob_space, ac_space, nsteps, should_summarize)
+def get_actor_critic(sess, nenvs, nsteps, ob_space, ac_space,
+        policy, should_summary=True):
+
+    actor_critic = ActorCritic(sess, policy, ob_space, ac_space, nenvs, nsteps, should_summary)
+
     return actor_critic
