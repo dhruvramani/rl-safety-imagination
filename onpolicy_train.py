@@ -118,7 +118,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
         mb_dones.append(dones)
 
         #batch of steps to batch of rollouts
-        mb_obs = np.asarray(mb_obs, dtype=np.float32).reshape((N_ENVS * N_STEPS, nw, nh, nc)) #.swapaxes(1, 0).reshape(batch_ob_shape)
+        mb_obs = np.asarray(mb_obs, dtype=np.float32).reshape(batch_ob_shape) #.swapaxes(1, 0).reshape(batch_ob_shape)
         mb_rewards = np.asarray(mb_rewards, dtype=np.float32).swapaxes(1, 0)
         mb_actions = np.asarray(mb_actions, dtype=np.int32).swapaxes(1, 0)
         mb_values = np.asarray(mb_values, dtype=np.float32).swapaxes(1, 0)
