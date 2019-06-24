@@ -7,15 +7,19 @@ import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 import argparse
-import safe_grid_gym
+#import safe_grid_gym
 
 #from i2a import I2aPolicy
 from utils import SubprocVecEnv
 from a2c import CnnPolicy, get_actor_critic
 
+from ai_safety_gridworlds.environments.side_effects_sokoban import SideEffectsSokobanEnvironment
 
-N_ENVS = 2
-N_STEPS=5
+
+N_ENVS = 16
+N_STEPS = 5
+LEVEL = 0
+NOOPS = False
 
 # Total number of iterations (taking into account number of environments and
 # number of steps). You wish to train for.
@@ -43,9 +47,9 @@ def discount_with_dones(rewards, dones, GAMMA):
 
 def make_env():
     def _thunk():
-        env = gym.make("SideEffectsSokoban-v0")
+        env = SideEffectsSokobanEnvironment(level=LEVEL, noops=NOOPS) #gym.make("SideEffectsSokoban-v0")
         return env
-
+        
     return _thunk
 
 def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log_path = './logs'):
