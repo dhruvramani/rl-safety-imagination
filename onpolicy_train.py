@@ -7,13 +7,14 @@ import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 import argparse
-#import safe_grid_gym
+import safe_grid_gym
+from safe_grid_gym.envs.gridworlds_env import GridworldEnv
 
 #from i2a import I2aPolicy
 from utils import SubprocVecEnv
 from a2c import CnnPolicy, get_actor_critic
 
-from ai_safety_gridworlds.environments.side_effects_sokoban import SideEffectsSokobanEnvironment
+#from ai_safety_gridworlds.environments.side_effects_sokoban import SideEffectsSokobanEnvironment
 
 
 N_ENVS = 16
@@ -47,9 +48,9 @@ def discount_with_dones(rewards, dones, GAMMA):
 
 def make_env():
     def _thunk():
-        env = SideEffectsSokobanEnvironment(level=LEVEL, noops=NOOPS) #gym.make("SideEffectsSokoban-v0")
+        env = GridworldEnv("SideEffectsSokoban-v0") #SideEffectsSokobanEnvironment(level=LEVEL, noops=NOOPS) #gym.make("SideEffectsSokoban-v0")
         return env
-        
+
     return _thunk
 
 def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log_path = './logs'):
