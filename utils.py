@@ -92,6 +92,7 @@ class CloudpickleWrapper(object):
     def __setstate__(self, ob):
         import pickle
         self.x = pickle.loads(ob)
+        
 class SubprocVecEnv(VecEnv):
     def __init__(self, env_fns, spaces=None):
         """

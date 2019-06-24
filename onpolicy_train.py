@@ -14,7 +14,7 @@ from utils import SubprocVecEnv
 from a2c import CnnPolicy, get_actor_critic
 
 
-N_ENVS = 16
+N_ENVS = 2
 N_STEPS=5
 
 # Total number of iterations (taking into account number of environments and
