@@ -150,10 +150,8 @@ class ActorCritic(object):
             self.rewards: rewards
         }
 
-        print("Obs shape : ", obs.shape)
         inputs = self.train_model.get_inputs()
         mapped_input = self.train_model.transform_input(obs, self.sess)
-        print("Mapped I/p shape : ", obs.shape)
         for transformed_input, inp in zip(mapped_input, inputs):
             feed_dict[inp] = transformed_input
 
