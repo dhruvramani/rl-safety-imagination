@@ -8,7 +8,7 @@ import tensorflow as tf
 from tqdm import tqdm
 import argparse
 import safe_grid_gym
-from safe_grid_gym.envs.gridworlds_env import safe_grid_gym
+from safe_grid_gym.envs.gridworlds_env import GridworldEnv
 
 #from i2a import I2aPolicy
 from utils import SubprocVecEnv
