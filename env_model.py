@@ -11,10 +11,9 @@ from tqdm import tqdm
 from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoban_rewards
 
 # How many iterations we are training the environment model for.
+ENV_NAME = "side_effects_sokoban"
 NUM_UPDATES = 5000
-
 LOG_INTERVAL = 100
-
 N_ENVS = 16
 N_STEPS = 5
 
