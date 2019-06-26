@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         actor_critic = get_actor_critic(sess, N_ENVS, N_STEPS, ob_space, ac_space, CnnPolicy, should_summary=False)
-        actor_critic.load(A2C_WEIGHTS)
+        #actor_critic.load(A2C_WEIGHTS)
 
         _, states, _, _, _, _ = play_games(actor_critic, envs, 2)
         print(states.shape)
