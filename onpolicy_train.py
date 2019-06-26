@@ -24,7 +24,7 @@ TOTAL_TIMESTEPS=int(1e6)
 GAMMA=0.99
 
 LOG_INTERVAL=100
-SAVE_INTERVAL = 1e5
+SAVE_INTERVAL = 100
 
 # Where you want to save the weights
 SAVE_PATH = 'weights'
