@@ -7,20 +7,15 @@ import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 import argparse
-import safe_grid_gym
 from safe_grid_gym.envs.gridworlds_env import GridworldEnv
 
 #from i2a import I2aPolicy
 from utils import SubprocVecEnv
 from a2c import CnnPolicy, get_actor_critic
 
-#from ai_safety_gridworlds.environments.side_effects_sokoban import SideEffectsSokobanEnvironment
-
-
+ENV_NAME = "side_effects_sokoban"
 N_ENVS = 16
 N_STEPS = 5
-LEVEL = 0
-NOOPS = False
 
 # Total number of iterations (taking into account number of environments and
 # number of steps). You wish to train for.
@@ -34,10 +29,6 @@ SAVE_INTERVAL = 1e5
 # Where you want to save the weights
 SAVE_PATH = 'weights'
 
-# This can be anything from "regular" "avoid" "hunt" "ambush" "rush" each
-# resulting in a different reward function giving the agent different behavior.
-REWARD_MODE = 'regular'
-
 def discount_with_dones(rewards, dones, GAMMA):
     discounted = []
     r = 0
@@ -48,7 +39,7 @@ def discount_with_dones(rewards, dones, GAMMA):
 
 def make_env():
     def _thunk():
-        env = GridworldEnv("side_effects_sokoban") #SideEffectsSokobanEnvironment(level=LEVEL, noops=NOOPS) #gym.make("SideEffectsSokoban-v0")
+        env = GridworldEnv(ENV_NAME)
         return env
 
     return _thunk
