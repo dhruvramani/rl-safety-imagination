@@ -1,15 +1,14 @@
 import os
 import tensorflow as tf
-#from common.minipacman import MiniPacman
 from safe_grid_gym.envs.gridworlds_env import GridworldEnv
 from a2c import get_actor_critic, CnnPolicy
-from common.multiprocessing_env import SubprocVecEnv
+from utils import SubprocVecEnv
 import numpy as np
 
 from tqdm import tqdm
 
 #from common.pacman_util import num_pixels, mode_rewards, pix_to_target, rewards_to_target
-from discretize_env import pix_to_target, _NUM_PIXELS, sokoban_rewards
+from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoban_rewards
 
 # How many iterations we are training the environment model for.
 NUM_UPDATES = 5000
