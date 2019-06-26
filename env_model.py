@@ -29,12 +29,12 @@ def basic_block(X, batch_size, depth, width, height, n1, n2, n3):
 
     with tf.variable_scope('part_1_block'):
         # Padding was 6 here
-        #p_padded = tf.pad(p, [[0, 0], [6, 6], [6, 6], [0, 0]])
-        p_1_c1 = tf.layers.conv2d(p, n1, kernel_size=1,
+        p_padded = tf.pad(p, [[0, 0], [6, 6], [6, 6], [0, 0]])
+        p_1_c1 = tf.layers.conv2d(p_padded, n1, kernel_size=1,
                 strides=2, padding='valid', activation=tf.nn.relu)
 
         # Padding was 5, 6
-        p_1_c1 = tf.pad(p_1_c1, [[0,0],[1,1],[1,1],[0,0]]) #tf.pad(p_1_c1, [[0,0], [5, 5], [6, 6], [0, 0]])
+        p_1_c1 = tf.pad(p_1_c1, [[0,0], [5, 5], [6, 6], [0, 0]])
         p_1_c2 = tf.layers.conv2d(p_1_c1, n1, kernel_size=10, strides=1,
                 padding='valid', activation=tf.nn.relu)
 
