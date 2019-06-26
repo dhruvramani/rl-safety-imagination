@@ -16,7 +16,7 @@ N_ENVS = 16
 N_STEPS = 5
 
 # Replace this with the location of your own weights.
-A2C_WEIGHTS = 'weights/a2c_200000.ckpt'
+A2C_WEIGHTS = 'weights/a2c_1800.ckpt'
 
 def pool_inject(X, batch_size, depth, width, height):
     m = tf.layers.max_pooling2d(X, pool_size=(width, height), strides=(width, height))
@@ -165,7 +165,7 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         actor_critic = get_actor_critic(sess, N_ENVS, N_STEPS, ob_space, ac_space, CnnPolicy, should_summary=False)
-        #actor_critic.load(A2C_WEIGHTS)
+        actor_critic.load(A2C_WEIGHTS)
 
         with tf.variable_scope('env_model'):
             env_model = create_env_model(ob_space, num_actions, _NUM_PIXELS,
