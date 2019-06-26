@@ -29,12 +29,11 @@ def basic_block(X, batch_size, depth, width, height, n1, n2, n3):
 
     with tf.variable_scope('part_1_block'):
         # Padding was 6 here
-        #p_padded = tf.pad(p, [[0, 0], [6, 6], [6, 6], [0, 0]])
         p_1_c1 = tf.layers.conv2d(p, n1, kernel_size=1,
-                    padding='valid', activation=tf.nn.relu) #  strides=2,
+                    padding='valid', activation=tf.nn.relu) 
 
         # Padding was 5, 6
-        p_1_c1 = tf.pad(p_1_c1, [[0,0],[1,1],[1,1],[0,0]]) #tf.pad(p_1_c1, [[0,0], [5, 5], [6, 6], [0, 0]])
+        p_1_c1 = tf.pad(p_1_c1, [[0,0],[1,1],[1,1],[0,0]])
         p_1_c2 = tf.layers.conv2d(p_1_c1, n1, kernel_size=3, strides=1,
                 padding='valid', activation=tf.nn.relu)
 
@@ -127,9 +126,11 @@ def play_games(actor_critic, envs, frames):
     states = envs.reset()
 
     for frame_idx in range(frames):
+
         states = np.copy(states)
         states = np.squeeze(states, axis=1)
         states = np.expand_dims(states, axis=3)
+        
         actions, _, _ = actor_critic.act(states)
         next_states, rewards, dones, _ = envs.step(actions)
 
@@ -188,10 +189,6 @@ if __name__ == '__main__':
         for frame_idx, states, actions, rewards, next_states, dones in tqdm(play_games(actor_critic, envs, NUM_UPDATES), total=NUM_UPDATES):
             target_state = pix_to_target(next_states)
             target_reward = rewards_to_target(rewards)
-
-            #states = np.copy(states)
-            #states = np.squeeze(states, axis=1)
-            #states = np.expand_dims(states, axis=3)
 
             # NOTE : which action at which point?
             onehot_actions = np.zeros((N_ENVS, num_actions, width, height))
