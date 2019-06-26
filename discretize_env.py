@@ -38,7 +38,7 @@ def pix_to_target(next_states):
 
 def target_to_pix(imagined_states):
     imagined_states = np.asarray(imagined_states, dtype=np.float32)
-    imagined_states = imagined_states.reshape(N_ENVS, 1, 6, 6)
+    #imagined_states = imagined_states.reshape(N_ENVS, 1, 6, 6)
 
     return imagined_states
 
