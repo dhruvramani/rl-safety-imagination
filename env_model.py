@@ -6,8 +6,6 @@ from utils import SubprocVecEnv
 import numpy as np
 
 from tqdm import tqdm
-
-#from common.pacman_util import num_pixels, mode_rewards, pix_to_target, rewards_to_target
 from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoban_rewards
 
 # How many iterations we are training the environment model for.
@@ -16,9 +14,6 @@ NUM_UPDATES = 5000
 LOG_INTERVAL = 100
 N_ENVS = 16
 N_STEPS = 5
-
-# This can be anything from "regular" "avoid" "hunt" "ambush" "rush" each
-# resulting in a different reward function giving the agent different behavior.
 
 # Replace this with the location of your own weights.
 A2C_WEIGHTS = 'weights/a2c_200000.ckpt'
@@ -168,10 +163,6 @@ if __name__ == '__main__':
         actor_critic = get_actor_critic(sess, N_ENVS, N_STEPS, ob_space, ac_space, CnnPolicy, should_summary=False)
         #actor_critic.load(A2C_WEIGHTS)
 
-        _, states, _, _, _, _ = play_games(actor_critic, envs, 2)
-        print(states.shape)
-        _ = input(" ")
-
         with tf.variable_scope('env_model'):
             env_model = create_env_model(ob_space, num_actions, _NUM_PIXELS,
                     len(sokoban_rewards))
@@ -194,6 +185,10 @@ if __name__ == '__main__':
         for frame_idx, states, actions, rewards, next_states, dones in tqdm(play_games(actor_critic, envs, NUM_UPDATES), total=NUM_UPDATES):
             target_state = pix_to_target(next_states)
             target_reward = rewards_to_target(rewards)
+
+            states = np.copy(states)
+            states = np.squeeze(states, axis=1)
+            states = np.expand_dims(states, axis=3)
 
             # NOTE : which action at which point?
             onehot_actions = np.zeros((N_ENVS, num_actions, width, height))
