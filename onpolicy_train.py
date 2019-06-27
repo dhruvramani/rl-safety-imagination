@@ -155,15 +155,13 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--algo', help='Algorithm to train either i2a or a2c')
+    parser.add_argument('--algo', help='Algorithm to train a2c (or something else in the future)')
     args = parser.parse_args()
 
     if args.algo == 'a2c':
         policy = CnnPolicy
-    elif args.algo == 'i2a':
-        policy = I2aPolicy
     else:
-        raise ValueError('Must specify the algo name as either a2c or i2a')
+        raise ValueError('Must specify the algo name as either a2c or (something else in the future)')
 
     train(policy, args.algo, summarize=True, log_path=args.algo + '_logs')
 
