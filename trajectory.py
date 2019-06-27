@@ -166,6 +166,7 @@ if __name__ == '__main__':
     ob_space = envs.observation_space.shape
     nc, nw, nh = ob_space
     ac_space = envs.action_space
+    num_actions = ac_space.n
 
     obs = envs.reset()
     ob_np = np.copy(obs)
@@ -182,7 +183,7 @@ if __name__ == '__main__':
     imagination = ImaginationCore(NUM_ROLLOUTS, num_actions, num_rewards,
                 ob_space, actor_critic, env_model)
 
-    imagined_states, imagined_rewards = imagination.imagine(X, sess)
+    imagined_states, imagined_rewards = imagination.imagine(ob_np, sess)
     
     for imagined_state in imagined_states:
         print(imagined_state)
