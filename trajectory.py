@@ -22,7 +22,7 @@ NUM_ROLLOUTS = 1
 # Hidden size in RNN imagination encoder.
 HIDDEN_SIZE = 256
 
-N_ENVS = 1
+N_ENVS = 16
 N_STEPS = 5
 
 # Replace this with the name of the weights you want to load to train I2A
@@ -87,7 +87,7 @@ def get_cache_loaded_a2c(sess, nenvs, nsteps, ob_space, ac_space):
 
 # So the model is not loaded twice.
 g_env_model = None
-def get_cache_loaded_env_model(sess, nenvs, ob_space, num_actions):
+def get_cache_loaded_env_model(sess, ob_space, num_actions):
     global g_env_model
     if g_env_model is None:
         with tf.variable_scope('env_model'):
@@ -179,7 +179,7 @@ if __name__ == '__main__':
     sess = tf.Session(config=config)
 
     actor_critic = get_cache_loaded_a2c(sess, N_ENVS, N_STEPS, ob_space, ac_space)
-    env_model = get_cache_loaded_env_model(sess, N_ENVS, ob_space, num_actions)
+    env_model = get_cache_loaded_env_model(sess, ob_space, num_actions)
 
     imagination = ImaginationCore(NUM_ROLLOUTS, num_actions, num_rewards,
                 ob_space, actor_critic, env_model)
