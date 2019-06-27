@@ -163,16 +163,26 @@ class ImaginationCore(object):
         return rollout_states, rollout_rewards
 
 
+def generate_trajectory(sess, state, ob_space, ac_space):
+    num_actions = ac_space.n
+    num_rewards = len(sokoban_rewards)
+
+    actor_critic = get_cache_loaded_a2c(sess, N_ENVS, N_STEPS, ob_space, ac_space)
+    env_model = get_cache_loaded_env_model(sess, ob_space, num_actions)
+
+    imagination = ImaginationCore(NUM_ROLLOUTS, num_actions, num_rewards,
+                ob_space, actor_critic, env_model)
+
+    imagined_states, imagined_rewards = imagination.imagine(state, sess)
+    return imagined_states, imagined_rewards
+
 if __name__ == '__main__':
     envs = [make_env() for i in range(N_ENVS)]
     envs = SubprocVecEnv(envs)
 
     ob_space = envs.observation_space.shape
-    nc, nw, nh = ob_space
     ac_space = envs.action_space
-    num_actions = ac_space.n
-    num_rewards = len(sokoban_rewards)
-
+    
     obs = envs.reset()
     ob_np = np.copy(obs)
     ob_np = np.squeeze(ob_np, axis=1)
@@ -182,14 +192,7 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    actor_critic = get_cache_loaded_a2c(sess, N_ENVS, N_STEPS, ob_space, ac_space)
-    env_model = get_cache_loaded_env_model(sess, ob_space, num_actions)
+    imagined_states, imagined_rewards = generate_trajectory(sess, obs_np, ob_space, ac_space)
 
-    imagination = ImaginationCore(NUM_ROLLOUTS, num_actions, num_rewards,
-                ob_space, actor_critic, env_model)
-
-    imagined_states, imagined_rewards = imagination.imagine(ob_np, sess)
-    
     for imagined_state in imagined_states:
         print(imagined_state)
-
