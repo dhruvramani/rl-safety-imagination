@@ -133,8 +133,9 @@ class ImaginationCore(object):
         rollout_rewards = []
 
         for step in range(self.num_rollouts):
-            state = np.squeeze(state, axis=1)
-            state = np.expand_dims(state, axis=3)
+            #state = np.squeeze(state, axis=1)
+            #state = np.expand_dims(state, axis=3)
+            state = state.reshape(-1, nw, nh, nc)
 
             onehot_action = np.zeros((rollout_batch_size, self.num_actions, nw, nh))
             onehot_action[range(rollout_batch_size), action] = 1
@@ -156,6 +157,7 @@ class ImaginationCore(object):
             rollout_rewards.append(onehot_reward)
 
             state = imagined_state
+            state = state.reshape(-1, nw, nh, nc)
             action, _, _ = self.actor_critic.act(state)
 
         return rollout_states, rollout_rewards
