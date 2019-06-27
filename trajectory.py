@@ -12,8 +12,6 @@ from env_model import make_env, create_env_model
 from a2c import get_actor_critic, CnnPolicy
 from discretize_env import pix_to_target, target_to_pix, rewards_to_target, _NUM_PIXELS, sokoban_rewards
 
-from common.pacman_util import num_pixels, mode_rewards, pix_to_target, rewards_to_target, mode_rewards, target_to_pix
-
 
 # Hyperparameter of how far ahead in the future the agent "imagines"
 # Currently this is specifying one frame in the future.
