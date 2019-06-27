@@ -115,7 +115,7 @@ class ImaginationCore(object):
 
 
     def imagine(self, state, sess):
-        nw, nh, nc = self.ob_space
+        nc, nw, nh = self.ob_space
 
         batch_size = state.shape[0]
 
@@ -135,7 +135,7 @@ class ImaginationCore(object):
         for step in range(self.num_rollouts):
             state = np.squeeze(state, axis=1)
             state = np.expand_dims(state, axis=3)
-            
+
             onehot_action = np.zeros((rollout_batch_size, self.num_actions, nw, nh))
             onehot_action[range(rollout_batch_size), action] = 1
             onehot_action = np.transpose(onehot_action, (0, 2, 3, 1))
