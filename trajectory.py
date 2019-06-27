@@ -44,7 +44,6 @@ def softmax(X, theta = 1.0, axis = None):
     Returns an array the same size as X. The result will sum to 1
     along the specified axis.
     """
-
     # make X at least 2d
     y = np.atleast_2d(X)
     if axis is None:
@@ -89,8 +88,8 @@ def get_cache_loaded_env_model(sess, ob_space, num_actions):
     global g_env_model
     if g_env_model is None:
         with tf.variable_scope('env_model'):
-            g_env_model = create_env_model(ob_space, num_actions, num_pixels,
-                    len(mode_rewards[REWARD_MODE]), should_summary=False)
+            g_env_model = create_env_model(ob_space, num_actions, _NUM_PIXELS,
+                    len(sokoban_rewards), should_summary=False)
 
         save_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='env_model')
         loader = tf.train.Saver(var_list=save_vars)
@@ -167,6 +166,7 @@ if __name__ == '__main__':
     nc, nw, nh = ob_space
     ac_space = envs.action_space
     num_actions = ac_space.n
+    num_rewards = len(sokoban_rewards)
 
     obs = envs.reset()
     ob_np = np.copy(obs)
