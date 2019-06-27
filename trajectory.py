@@ -192,7 +192,7 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    imagined_states, imagined_rewards = generate_trajectory(sess, obs_np, ob_space, ac_space)
+    imagined_states, imagined_rewards = generate_trajectory(sess, ob_np, ob_space, ac_space)
 
     for imagined_state in imagined_states:
         print(imagined_state)
