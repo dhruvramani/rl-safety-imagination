@@ -1,4 +1,5 @@
 import os
+import sys
 import gym
 import time
 import logging
@@ -12,6 +13,7 @@ from env_model import make_env, create_env_model
 from a2c import get_actor_critic, CnnPolicy
 from discretize_env import pix_to_target, target_to_pix, rewards_to_target, _NUM_PIXELS, sokoban_rewards
 
+np.set_printoptions(threshold=sys.maxsize)
 
 # Hyperparameter of how far ahead in the future the agent "imagines"
 # Currently this is specifying one frame in the future.
