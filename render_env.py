@@ -1,3 +1,4 @@
+import time
 import curses
 import numpy as np
 import tensorflow as tf
@@ -43,7 +44,6 @@ with tf.Session() as sess:
     loader = tf.train.Saver(var_list=save_vars)
     loader.restore(sess, 'weights/env_model.ckpt')
     
-    clear_output(True)
     while not done and steps < 20:
         steps += 1
         actions, _, _ = actor_critic.act(np.expand_dims(states, axis=3))
@@ -69,6 +69,6 @@ with tf.Session() as sess:
         
         #print("Actual (Reward %i)" % reward)
         #print(states)
-        env.render("human", states[0][0], reward)
+        env.render("human", states[0, :, :], reward)
         time.sleep(0.1)
 
