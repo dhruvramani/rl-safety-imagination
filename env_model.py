@@ -205,7 +205,7 @@ if __name__ == '__main__':
                 env_model.loss,
                 env_model.reward_loss,
                 env_model.image_loss,
-                summary_op
+                summary_op,
                 env_model.opt], feed_dict={
                     env_model.input_states: states,
                     env_model.input_actions: onehot_actions,
