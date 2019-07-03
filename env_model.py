@@ -223,7 +223,7 @@ if __name__ == '__main__':
                     val_onehot_actions[range(N_ENVS), val_actions] = 1
                     val_onehot_actions = val_onehot_actions.transpose(0, 2, 3, 1)
 
-                    val_summary = sess.run(summary_op
+                    val_summary = sess.run(summary_op,
                         feed_dict={env_model.input_states: val_states, env_model.input_actions: val_onehot_actions, 
                         env_model.target_states: val_target_state, env_model.target_rewards: val_target_reward})
 
