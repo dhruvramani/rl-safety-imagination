@@ -71,6 +71,6 @@ with tf.Session() as sess:
         #print("Actual (Reward %i)" % reward)
         #print(states)
         env.render("human", states[0, :, :], reward)
-        time.sleep(0.1)
+        time.sleep(0.2)
 
 env.close()
