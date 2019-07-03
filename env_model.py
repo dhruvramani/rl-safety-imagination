@@ -131,7 +131,8 @@ def play_games(actor_critic, envs, frames):
         states = np.squeeze(states, axis=1)
         states = np.expand_dims(states, axis=3)
         
-        actions, _, _ = actor_critic.act(states)
+        #actions, _, _ = actor_critic.act(states)
+        actions = envs.action_space.sample()
         next_states, rewards, dones, _ = envs.step(actions)
 
         yield frame_idx, states, actions, rewards, next_states, dones
@@ -190,7 +191,6 @@ if __name__ == '__main__':
         validation_counter = 0
 
         for frame_idx, states, actions, rewards, next_states, dones in tqdm(play_games(actor_critic, envs, NUM_UPDATES), total=NUM_UPDATES):
-            actions = envs.action_space.sample()
             target_state = pix_to_target(next_states)
             target_reward = rewards_to_target(rewards)
 
@@ -218,7 +218,6 @@ if __name__ == '__main__':
                 print('%i => Loss : %.4f, Reward Loss : %.4f, Image Loss : %.4f' % (frame_idx, l, reward_loss, image_loss))
                 
                 for val_frame_idx, val_states, val_actions, val_rewards, val_next_states, val_dones in play_games(actor_critic, envs, 50):
-                    vsl_actions = envs.action_space.sample()
                     val_target_state = pix_to_target(next_states)
                     val_target_reward = rewards_to_target(rewards)
 
