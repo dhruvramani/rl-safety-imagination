@@ -108,17 +108,13 @@ def create_env_model(obs_shape, num_actions, num_pixels, num_rewards,
     opt = tf.train.AdamOptimizer().minimize(loss)
 
     # Tensorboard
-    summaries = dict()
     if should_summary:
-        summaries['training_loss']          = tf.summary.scalar('training_loss', loss)
-        summaries['training_reward_loss']   = tf.summary.scalar('training_reward_loss', reward_loss)
-        summaries['training_image_loss']    = tf.summary.scalar('training_image_loss', image_loss)
-        summaries['validation_loss']        = tf.summary.scalar('validation_loss', loss)
-        summaries['validation_reward_loss'] = tf.summary.scalar('validation_reward_loss', reward_loss)
-        summaries['validation_image_loss']  = tf.summary.scalar('validation_image_loss', image_loss)
+        tf.summary.scalar('loss', loss)
+        tf.summary.scalar('reward_loss', reward_loss)
+        tf.summary.scalar('image_loss', image_loss)
 
     return EnvModelData(image, reward, states, onehot_actions, loss,
-            reward_loss, image_loss, target_states, target_rewards, opt, summaries)
+            reward_loss, image_loss, target_states, target_rewards, opt)
 
 def make_env():
     def _thunk():
@@ -145,7 +141,7 @@ def play_games(actor_critic, envs, frames):
 
 class EnvModelData(object):
     def __init__(self, imag_state, imag_reward, input_states, input_actions,
-            loss, reward_loss, image_loss, target_states, target_rewards, opt, summaries):
+            loss, reward_loss, image_loss, target_states, target_rewards, opt):
         self.imag_state       = imag_state
         self.imag_reward      = imag_reward
         self.input_states     = input_states
@@ -157,7 +153,6 @@ class EnvModelData(object):
         self.target_states    = target_states
         self.target_rewards   = target_rewards
         self.opt              = opt
-        self.summaries        = summaries
 
 
 if __name__ == '__main__':
@@ -188,7 +183,9 @@ if __name__ == '__main__':
         save_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='env_model')
         saver = tf.train.Saver(var_list=save_vars)
 
-        writer = tf.summary.FileWriter('./env_logs', graph=sess.graph)
+        train_writer = tf.summary.FileWriter('./env_logs/train/', graph=sess.graph)
+        val_writer = tf.summary.FileWriter('./env_logs/val/', graph=sess.graph)
+        summary_op = tf.merge_all_summaries()
 
         validation_counter = 0
 
@@ -202,15 +199,13 @@ if __name__ == '__main__':
             # Change so actions are the 'depth of the image' as tf expects
             onehot_actions = onehot_actions.transpose(0, 2, 3, 1)
 
-            s, r, l, reward_loss, image_loss, summary_tl, summary_trl, summary_til, _ = sess.run([
+            s, r, l, reward_loss, image_loss, summary, _ = sess.run([
                 env_model.imag_state,
                 env_model.imag_reward,
                 env_model.loss,
                 env_model.reward_loss,
                 env_model.image_loss,
-                env_model.summaries['training_loss'],
-                env_model.summaries['training_reward_loss'],
-                env_model.summaries['training_image_loss'],
+                summary_op
                 env_model.opt], feed_dict={
                     env_model.input_states: states,
                     env_model.input_actions: onehot_actions,
@@ -228,21 +223,14 @@ if __name__ == '__main__':
                     val_onehot_actions[range(N_ENVS), val_actions] = 1
                     val_onehot_actions = val_onehot_actions.transpose(0, 2, 3, 1)
 
-                    val_summary_tl, val_summary_trl, val_summary_til = sess.run([
-                        env_model.summaries['validation_loss'],
-                        env_model.summaries['validation_reward_loss'],
-                        env_model.summaries['validation_image_loss']], 
+                    val_summary = sess.run(summary_op
                         feed_dict={env_model.input_states: val_states, env_model.input_actions: val_onehot_actions, 
                         env_model.target_states: val_target_state, env_model.target_rewards: val_target_reward})
 
-                    writer.add_summary(summary_tl, validation_counter * 50 + frame_idx)
-                    writer.add_summary(summary_trl, validation_counter * 50 + frame_idx)
-                    writer.add_summary(summary_til, validation_counter * 50 + frame_idx)
+                    val_writer.add_summary(val_summary, validation_counter * 50 + frame_idx)
                 validation_counter += 1
 
-            writer.add_summary(summary_tl, frame_idx)
-            writer.add_summary(summary_trl, frame_idx)
-            writer.add_summary(summary_til, frame_idx)
+            train_writer.add_summary(summary, frame_idx)
 
         saver.save(sess, 'weights/env_model.ckpt')
         print('Environment model saved!')
