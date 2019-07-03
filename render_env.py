@@ -8,7 +8,6 @@ from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoba
 from a2c import get_actor_critic, CnnPolicy
 from trajectory import convert_target_to_real
 from safe_grid_gym.envs.gridworlds_env import GridworldEnv
-from gym.wrappers import Monitor
 
 nenvs = 16
 nsteps = 5
@@ -20,7 +19,6 @@ ac_space = envs.action_space
 num_actions = envs.action_space.n
 
 env = GridworldEnv("side_effects_sokoban")
-env = Monitor(env, './video')
 
 done = False
 states = env.reset()
