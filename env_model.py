@@ -238,7 +238,7 @@ if __name__ == '__main__':
                     writer.add_summary(summary_tl, validation_counter * 50 + frame_idx)
                     writer.add_summary(summary_trl, validation_counter * 50 + frame_idx)
                     writer.add_summary(summary_til, validation_counter * 50 + frame_idx)
-                    validation_counter += 1
+                validation_counter += 1
 
             writer.add_summary(summary_tl, frame_idx)
             writer.add_summary(summary_trl, frame_idx)
