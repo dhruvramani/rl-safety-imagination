@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
         train_writer = tf.summary.FileWriter('./env_logs/train/', graph=sess.graph)
         val_writer = tf.summary.FileWriter('./env_logs/val/', graph=sess.graph)
-        summary_op = tf.merge_all_summaries()
+        summary_op = tf.summary.merge_all()()
 
         validation_counter = 0
 
