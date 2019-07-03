@@ -9,7 +9,6 @@ from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoba
 from a2c import get_actor_critic, CnnPolicy
 from trajectory import convert_target_to_real
 from safe_grid_gym.envs.gridworlds_env import GridworldEnv
-from termtosvg.main import main as record
 
 nenvs = 16
 nsteps = 5
@@ -46,7 +45,6 @@ with tf.Session() as sess:
     loader = tf.train.Saver(var_list=save_vars)
     loader.restore(sess, 'weights/env_model.ckpt')
     
-    record()
     while not done and steps < 20:
         steps += 1
         actions, _, _ = actor_critic.act(np.expand_dims(states, axis=3))
@@ -76,4 +74,3 @@ with tf.Session() as sess:
         time.sleep(0.1)
 
 env.close()
-os.system('exit')
