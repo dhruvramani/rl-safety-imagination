@@ -1,6 +1,6 @@
 # Code is from OpenAI baseline.
 #https://github.com/openai/baselines/tree/master/baselines/common/vec_env
-
+import itertools
 import numpy as np
 from multiprocessing import Process, Pipe
 
@@ -116,7 +116,7 @@ class SubprocVecEnv(VecEnv):
         VecEnv.__init__(self, len(env_fns), observation_space, action_space)
 
     def step_async(self, actions):
-        for remote, action in zip(self.remotes, actions):
+        for remote, action in zip(itertools.repeat(self.remotes, action_space.n), actions):
             remote.send(('step', action))
         self.waiting = True
 

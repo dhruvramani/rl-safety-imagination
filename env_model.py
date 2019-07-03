@@ -131,8 +131,8 @@ def play_games(actor_critic, envs, frames):
         states = np.squeeze(states, axis=1)
         states = np.expand_dims(states, axis=3)
         
+        actions = env.action_space.sample()
         #actions, _, _ = actor_critic.act(states)
-        actions = envs.action_space.sample()
         next_states, rewards, dones, _ = envs.step(actions)
 
         yield frame_idx, states, actions, rewards, next_states, dones
