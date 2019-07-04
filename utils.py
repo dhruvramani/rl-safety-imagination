@@ -117,7 +117,7 @@ class SubprocVecEnv(VecEnv):
 
     def step_async(self, actions):
         if(type(actions) == int):
-            for remotein zip(self.remotes):
+            for remote in self.remotes:
                 remote.send(('step', actions))
         else:
             for remote, action in zip(self.remotes, actions):
