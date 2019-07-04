@@ -70,7 +70,7 @@ with tf.Session() as sess:
         
         #print("Actual (Reward %i)" % reward)
         #print(states)
-        env.render("human", states[0, :, :], reward)
+        env.render("human", s[0][0, :, :], r[0])
         time.sleep(0.2)
 
 env.close()
