@@ -181,6 +181,8 @@ def generate_trajectory(sess, state, ob_space, ac_space):
 if __name__ == '__main__':
     envs = [make_env() for i in range(N_ENVS)]
     envs = SubprocVecEnv(envs)
+    env = GridworldEnv("side_effects_sokoban")
+    env.reset()
 
     ob_space = envs.observation_space.shape
     ac_space = envs.action_space
