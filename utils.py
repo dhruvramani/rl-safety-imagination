@@ -116,8 +116,12 @@ class SubprocVecEnv(VecEnv):
         VecEnv.__init__(self, len(env_fns), observation_space, action_space)
 
     def step_async(self, actions):
-        for remote in zip(self.remotes):
-            remote.send(('step', actions))
+        if(type(actions) == int):
+            for remotein zip(self.remotes):
+                remote.send(('step', actions))
+        else:
+            for remote, action in zip(self.remotes, actions):
+                remote.send(('step', action))
         self.waiting = True
 
     def step_wait(self):
