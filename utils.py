@@ -112,11 +112,12 @@ class SubprocVecEnv(VecEnv):
             remote.close()
 
         self.remotes[0].send(('get_spaces', None))
-        self.observation_space, self.action_space = self.remotes[0].recv()
-        VecEnv.__init__(self, len(env_fns), self.observation_space, self.action_space)
+        observation_space, action_space = self.remotes[0].recv()
+        VecEnv.__init__(self, len(env_fns), observation_space, action_space)
 
     def step_async(self, actions):
-        for remote, action in zip(itertools.repeat(self.remotes, self.action_space.n), actions):
+        print(actions)
+        for remote, action in zip(self.remotes, actions.tolist()):
             remote.send(('step', action))
         self.waiting = True
 
