@@ -199,5 +199,6 @@ if __name__ == '__main__':
     imagined_states, imagined_rewards = generate_trajectory(sess, ob_np, ob_space, ac_space)
 
     for imagined_state in imagined_states:
+        print(imagined_state)
         env.render("human", imagined_state[0, :, :], 0)
         time.sleep(0.2)
