@@ -197,8 +197,12 @@ if __name__ == '__main__':
     sess = tf.Session(config=config)
 
     imagined_states, imagined_rewards = generate_trajectory(sess, ob_np, ob_space, ac_space)
+    imagined_states, imagined_rewards = imagined_states[0], imagined_rewards[0]
+    imagined_rewards = np.argmax(imagined_rewards, axis=1)
 
-    for imagined_state in imagined_states:
-        print(imagined_state)
-        env.render("human", imagined_state[0, :, :], 0)
+    for i in range(imagined_states.shape[0]):
+        #print(imagined_state.shape)
+        #print()
+        _, _, _, _ = env.step(ac_space.sample())
+        env.render("human", imagined_states[i, 0, :, :], sokoban_rewards[imagined_rewards[i]])
         time.sleep(0.2)

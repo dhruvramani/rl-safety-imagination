@@ -64,13 +64,14 @@ with tf.Session() as sess:
         s, r = convert_target_to_real(1, nw, nh, nc, s, r)
         
         states, reward, done, _ = env.step(actions[0])
-
+        # NOTE : render screws up if reward isnt proper
         #print("Imagined (Reward %i)" % r[0])
-        print(s.shape)
-        
+        #print(s)
+    
         #print("Actual (Reward %i)" % reward)
-        print(states.shape)
-        #env.render("human", states[0, :, :], reward)
-        time.sleep(0.1)
+        #print(states)
+        env.render("human", states[0, :, :], reward)
+        #env.render("human", s[0, 0, :, :], sokoban_rewards[r[0]])
+        time.sleep(0.2)
 
 env.close()
