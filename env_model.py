@@ -188,8 +188,6 @@ if __name__ == '__main__':
         val_writer = tf.summary.FileWriter('./env_logs/val/', graph=sess.graph)
         summary_op = tf.summary.merge_all()
 
-        validation_counter = 0
-
         for frame_idx, states, actions, rewards, next_states, dones in tqdm(play_games(actor_critic, envs, NUM_UPDATES), total=NUM_UPDATES):
             target_state = pix_to_target(next_states)
             target_reward = rewards_to_target(rewards)
@@ -217,6 +215,7 @@ if __name__ == '__main__':
             if frame_idx % LOG_INTERVAL == 0:
                 print('%i => Loss : %.4f, Reward Loss : %.4f, Image Loss : %.4f' % (frame_idx, l, reward_loss, image_loss))
                 
+                validation_counter = 0
                 for val_frame_idx, val_states, val_actions, val_rewards, val_next_states, val_dones in play_games(actor_critic, envs, 50):
                     val_target_state = pix_to_target(next_states)
                     val_target_reward = rewards_to_target(rewards)
@@ -229,7 +228,7 @@ if __name__ == '__main__':
                         feed_dict={env_model.input_states: val_states, env_model.input_actions: val_onehot_actions, 
                         env_model.target_states: val_target_state, env_model.target_rewards: val_target_reward})
 
-                    val_writer.add_summary(val_summary, validation_counter * 50 + frame_idx)
+                    val_writer.add_summary(val_summary, validation_counter + 50 * (frame_idx) / LOG_INTERVAL)
                 validation_counter += 1
 
             train_writer.add_summary(summary, frame_idx)

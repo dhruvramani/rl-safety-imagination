@@ -30,13 +30,11 @@ print('Number of actions ', num_actions)
 steps = 0
 
 with tf.Session() as sess:
-    # Load the actor
     with tf.variable_scope('actor'):
         actor_critic = get_actor_critic(sess, nenvs, nsteps, ob_space,
                 ac_space, CnnPolicy, should_summary=False)
     actor_critic.load('weights/a2c_1800.ckpt')
     
-    # Load the env_model
     with tf.variable_scope('env_model'): 
         env_model = create_env_model(ob_space, num_actions,_NUM_PIXELS,
                     len(sokoban_rewards), should_summary=False)
@@ -65,11 +63,7 @@ with tf.Session() as sess:
         
         states, reward, done, _ = env.step(actions[0])
         # NOTE : render screws up if reward isnt proper
-        #print("Imagined (Reward %i)" % r[0])
-        #print(s)
-    
-        #print("Actual (Reward %i)" % reward)
-        #print(states)
+ 
         env.render("human", states[0, :, :], reward)
         #env.render("human", s[0, 0, :, :], sokoban_rewards[r[0]])
         time.sleep(0.2)

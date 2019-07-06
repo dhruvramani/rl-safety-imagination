@@ -25,7 +25,6 @@ HIDDEN_SIZE = 256
 N_ENVS = 16
 N_STEPS = 5
 
-# Replace this with the name of the weights you want to load to train I2A
 A2C_MODEL_PATH = 'weights/a2c_1800.ckpt'
 ENV_MODEL_PATH = 'weights/env_model.ckpt'
 
@@ -70,7 +69,6 @@ def convert_target_to_real(batch_size, nw, nh, nc, imagined_state, imagined_rewa
 
     return imagined_state, imagined_reward
 
-# So the model is not loaded twice.
 g_actor_critic = None
 def get_cache_loaded_a2c(sess, nenvs, nsteps, ob_space, ac_space):
     global g_actor_critic
@@ -84,7 +82,6 @@ def get_cache_loaded_a2c(sess, nenvs, nsteps, ob_space, ac_space):
     return g_actor_critic
 
 
-# So the model is not loaded twice.
 g_env_model = None
 def get_cache_loaded_env_model(sess, ob_space, num_actions):
     global g_env_model
@@ -135,8 +132,6 @@ class ImaginationCore(object):
         rollout_rewards = []
 
         for step in range(self.num_rollouts):
-            #state = np.squeeze(state, axis=1)
-            #state = np.expand_dims(state, axis=3)
             state = state.reshape(-1, nw, nh, nc)
 
             onehot_action = np.zeros((rollout_batch_size, self.num_actions, nw, nh))
@@ -201,8 +196,6 @@ if __name__ == '__main__':
     imagined_rewards = np.argmax(imagined_rewards, axis=1)
 
     for i in range(imagined_states.shape[0]):
-        #print(imagined_state.shape)
-        #print()
         _, _, _, _ = env.step(ac_space.sample())
         env.render("human", imagined_states[i, 0, :, :], sokoban_rewards[imagined_rewards[i]])
         time.sleep(0.2)
