@@ -66,11 +66,11 @@ with tf.Session() as sess:
         states, reward, done, _ = env.step(actions[0])
 
         #print("Imagined (Reward %i)" % r[0])
-        #print(s[0])
+        print(s.shape)
         
         #print("Actual (Reward %i)" % reward)
-        #print(states)
-        env.render("human", s[0][0, :, :], r[0])
-        time.sleep(0.2)
+        print(states.shape)
+        #env.render("human", states[0, :, :], reward)
+        time.sleep(0.1)
 
 env.close()
