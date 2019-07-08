@@ -30,26 +30,30 @@ def basic_block(X, batch_size, depth, width, height, n1, n2, n3):
     with tf.variable_scope('part_1_block'):
         # Padding was 6 here
         p_1_c1 = tf.layers.conv2d(p, n1, kernel_size=1,
-                    padding='valid', activation=tf.nn.relu) 
+                    padding='valid', activation=tf.nn.relu)
+        p_1_c1 = tf.layers.dropout(p_1_c1, rate=0.5)
 
         # Padding was 5, 6
         p_1_c1 = tf.pad(p_1_c1, [[0,0],[1,1],[1,1],[0,0]])
         p_1_c2 = tf.layers.conv2d(p_1_c1, n1, kernel_size=3, strides=1,
                 padding='valid', activation=tf.nn.relu)
+        p_1_c2 = tf.layers.dropout(p_1_c2, rate=0.5)
 
     with tf.variable_scope('part_2_block'):
         p_2_c1 = tf.layers.conv2d(p, n2, kernel_size=1,
                 activation=tf.nn.relu)
-
+        p_2_c1 = tf.layers.dropout(p_2_c1, rate=0.5)
         p_2_c1 = tf.pad(p_2_c1, [[0,0],[1,1],[1,1],[0,0]])
         p_2_c2 = tf.layers.conv2d(p_2_c1, n2, kernel_size=3, strides=1,
                 padding='valid', activation=tf.nn.relu)
+        p_2_c2 = tf.layers.dropout(p_2_c2, rate=0.5)
 
     with tf.variable_scope('combine_parts'):
         combined = tf.concat([p_1_c2, p_2_c2], axis=-1)
 
         c = tf.layers.conv2d(combined, n3, kernel_size=1,
                 activation=tf.nn.relu)
+        c = tf.layers.dropout(c, rate=0.5)
 
     return tf.concat([c, X], axis=-1)
 
@@ -83,8 +87,10 @@ def create_env_model(obs_shape, num_actions, num_pixels, num_rewards,
 
     with tf.variable_scope('image_conver'):
         image = tf.layers.conv2d(bb2, 256, kernel_size=1, activation=tf.nn.relu)
+        image = tf.layers.dropout(image, rate=0.5)
         image = tf.reshape(image, [batch_size * width * height, 256])
         image = tf.layers.dense(image, num_pixels)
+        image = tf.layers.dropout(image, rate=0.5)
 
     with tf.variable_scope('reward'):
         reward = tf.layers.conv2d(bb2, 64, kernel_size=1,
