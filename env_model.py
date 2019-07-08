@@ -16,7 +16,7 @@ N_ENVS = 16
 N_STEPS = 5
 
 # Replace this with the location of your own weights.
-A2C_WEIGHTS = 'weights/a2c_1800.ckpt'
+A2C_WEIGHTS = 'weights/a2c_5100.ckpt'
 
 def pool_inject(X, batch_size, depth, width, height):
     m = tf.layers.max_pooling2d(X, pool_size=(width, height), strides=(width, height))

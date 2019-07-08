@@ -25,7 +25,7 @@ HIDDEN_SIZE = 256
 N_ENVS = 16
 N_STEPS = 5
 
-A2C_MODEL_PATH = 'weights/a2c_1800.ckpt'
+A2C_MODEL_PATH = 'weights/a2c_5100.ckpt'
 ENV_MODEL_PATH = 'weights/env_model.ckpt'
 
 # Softmax function for numpy taken from
@@ -177,7 +177,7 @@ def generate_trajectory(sess, state, ob_space, ac_space):
     for i in range(imagined_states.shape[0]):
         imagined_states_list.append(imagined_states[i, 0, :, :])
         imagined_rewards_list.append(sokoban_rewards[imagined_rewards[i]])
-        if(sokoban_rewards[imagined_rewards[i]] == 49 or sokoban_rewards[imagined_rewards[i]] == 0):
+        if(sokoban_rewards[imagined_rewards[i]] == 49):
             break
 
     return imagined_states_list, imagined_rewards_list

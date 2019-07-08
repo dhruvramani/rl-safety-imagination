@@ -33,7 +33,7 @@ with tf.Session() as sess:
     with tf.variable_scope('actor'):
         actor_critic = get_actor_critic(sess, nenvs, nsteps, ob_space,
                 ac_space, CnnPolicy, should_summary=False)
-    actor_critic.load('weights/a2c_1800.ckpt')
+    actor_critic.load('weights/a2c_5100.ckpt')
     
     with tf.variable_scope('env_model'): 
         env_model = create_env_model(ob_space, num_actions,_NUM_PIXELS,
