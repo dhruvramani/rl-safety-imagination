@@ -19,7 +19,7 @@ N_STEPS = 5
 
 # Total number of iterations (taking into account number of environments and
 # number of steps). You wish to train for.
-TOTAL_TIMESTEPS=int(1e6)
+TOTAL_TIMESTEPS = int(2e6)
 
 GAMMA=0.99
 

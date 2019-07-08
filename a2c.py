@@ -31,13 +31,16 @@ class CnnPolicy(object):
                                         kernel_size=[3,3],
                                         strides=[1,1],
                                         padding='VALID')
+            conv1 = tf.layers.dropout(conv1, rate=0.5)
             conv2 = tf.layers.conv2d(activation=tf.nn.relu,
                                         inputs=conv1,
                                         filters=16,
                                         kernel_size=[3,3],
                                         strides=[2,2],
                                         padding='VALID')
+            conv2 = tf.layers.dropout(conv2, rate=0.5)
             h = tf.layers.dense(tf.layers.flatten(conv2), 256, activation=tf.nn.relu)
+            h = tf.layers.dropout(h, rate=0.5)
             with tf.variable_scope('pi'):
                 pi = tf.layers.dense(h, nact,
                         activation=None,

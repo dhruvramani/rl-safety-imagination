@@ -177,7 +177,7 @@ def generate_trajectory(sess, state, ob_space, ac_space):
     for i in range(imagined_states.shape[0]):
         imagined_states_list.append(imagined_states[i, 0, :, :])
         imagined_rewards_list.append(sokoban_rewards[imagined_rewards[i]])
-        if(sokoban_rewards[imagined_rewards[i]] == 49):
+        if(sokoban_rewards[imagined_rewards[i]] == 49 or sokoban_rewards[imagined_rewards[i]] == 0):
             break
 
     return imagined_states_list, imagined_rewards_list
