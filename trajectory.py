@@ -113,13 +113,13 @@ class ImaginationCore(object):
         self.env_model    = env_model
 
 
-    def imagine(self, sess, state, env):
+    def imagine(self, sess, env, state):
         nc, nw, nh = self.ob_space
 
         #batch_size = state.shape[0]
 
         #state = np.tile(state, [self.num_actions, 1, 1, 1, 1])
-        #state = state.reshape(-1, nw, nh, nc)
+        state = state.reshape(1, nw, nh, nc)
 
         #action = np.array([[[i] for i in range(self.num_actions)] for j in
         #    range(batch_size)])
@@ -127,7 +127,7 @@ class ImaginationCore(object):
         #action = action.reshape((-1,))
 
 
-        action, _, _ = self.actor_critic.act(np.expand_dims(state, axis=3))
+        action, _, _ = self.actor_critic.act(state)
 
         #rollout_batch_size = batch_size * self.num_actions
 
@@ -136,14 +136,14 @@ class ImaginationCore(object):
 
         for step in range(self.num_rollouts):
 
-            onehot_action = np.zeros((1, num_actions, nw, nh))
+            onehot_action = np.zeros((1, self.num_actions, nw, nh))
             onehot_action[range(1), action] = 1
             onehot_action = onehot_action.transpose(0, 2, 3, 1)
 
             imagined_state, imagined_reward = sess.run(
                     [self.env_model.imag_state, self.env_model.imag_reward],
                     feed_dict={
-                        self.env_model.input_states: np.expand_dims(states, axis=3),
+                        self.env_model.input_states: state,
                         self.env_model.input_actions: onehot_action,
                 })
 
@@ -160,7 +160,8 @@ class ImaginationCore(object):
                 break
             
             state = imagined_state
-            action, _, _ = self.actor_critic.act(np.expand_dims(states, axis=3))
+            state = state.reshape(1, nw, nh, nc)
+            action, _, _ = self.actor_critic.act(state)
 
         return rollout_states, rollout_rewards
 
@@ -196,6 +197,6 @@ if __name__ == '__main__':
     #imagined_rewards = np.argmax(imagined_rewards, axis=1)
 
     for i in range(len(imagined_states)): # .shape[0]
-        _, _, _, _ = env.step(ac_space.sample())
+        _, _, _, _ = env.step(env.action_space.sample())
         env.render("human", imagined_states[i], imagined_rewards[i])
         time.sleep(0.2)
