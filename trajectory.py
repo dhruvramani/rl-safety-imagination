@@ -113,55 +113,64 @@ class ImaginationCore(object):
         self.env_model    = env_model
 
 
-    def imagine(self, state, sess):
+    def imagine(self, sess, state, env):
         nc, nw, nh = self.ob_space
 
-        batch_size = state.shape[0]
+        #batch_size = state.shape[0]
 
-        state = np.tile(state, [self.num_actions, 1, 1, 1, 1])
-        state = state.reshape(-1, nw, nh, nc)
+        #state = np.tile(state, [self.num_actions, 1, 1, 1, 1])
+        #state = state.reshape(-1, nw, nh, nc)
 
-        action = np.array([[[i] for i in range(self.num_actions)] for j in
-            range(batch_size)])
+        #action = np.array([[[i] for i in range(self.num_actions)] for j in
+        #    range(batch_size)])
 
-        action = action.reshape((-1,))
-        action, _, _ = self.actor_critic.act(state)
+        #action = action.reshape((-1,))
 
-        rollout_batch_size = batch_size * self.num_actions
+
+        action, _, _ = self.actor_critic.act(np.expand_dims(state, axis=3))
+
+        #rollout_batch_size = batch_size * self.num_actions
 
         rollout_states = []
         rollout_rewards = []
 
         for step in range(self.num_rollouts):
-            state = state.reshape(-1, nw, nh, nc)
 
-            onehot_action = np.zeros((rollout_batch_size, self.num_actions, nw, nh))
-            onehot_action[range(rollout_batch_size), action] = 1
-            onehot_action = np.transpose(onehot_action, (0, 2, 3, 1))
+            onehot_action = np.zeros((1, num_actions, nw, nh))
+            onehot_action[range(1), action] = 1
+            onehot_action = onehot_action.transpose(0, 2, 3, 1)
 
             imagined_state, imagined_reward = sess.run(
                     [self.env_model.imag_state, self.env_model.imag_reward],
                     feed_dict={
-                        self.env_model.input_states: state,
+                        self.env_model.input_states: np.expand_dims(states, axis=3),
                         self.env_model.input_actions: onehot_action,
                 })
 
-            imagined_state, imagined_reward = convert_target_to_real(rollout_batch_size, nw, nh, nc, imagined_state, imagined_reward)
-
-            onehot_reward = np.zeros((rollout_batch_size, self.num_rewards))
-            onehot_reward[range(rollout_batch_size), imagined_reward] = 1
-
+            imagined_state, imagined_reward = convert_target_to_real(1, nw, nh, nc, imagined_state, imagined_reward)
+            
+            imagined_state = imagined_state[0, 0, :, :]
+            imagined_reward = sokoban_rewards[imagined_reward[0]]
+            
             rollout_states.append(imagined_state)
-            rollout_rewards.append(onehot_reward)
-            _, _, done, _ = env.step()
+            rollout_rewards.append(imagined_reward)
+            
+            _, _, done, _ = env.step(action[0])
+            if(done == True or imagined_reward == 49):
+                break
+            
             state = imagined_state
-            state = state.reshape(-1, nw, nh, nc)
-            action, _, _ = self.actor_critic.act(state)
+            action, _, _ = self.actor_critic.act(np.expand_dims(states, axis=3))
 
         return rollout_states, rollout_rewards
 
 
-def generate_trajectory(sess, state, ob_space, ac_space):
+def generate_trajectory(sess, env, state):
+    envs = [make_env() for i in range(N_ENVS)]
+    envs = SubprocVecEnv(envs)
+
+    ob_space = envs.observation_space.shape
+    ac_space = envs.action_space
     num_actions = ac_space.n
     num_rewards = len(sokoban_rewards)
 
@@ -171,32 +180,22 @@ def generate_trajectory(sess, state, ob_space, ac_space):
     imagination = ImaginationCore(NUM_ROLLOUTS, num_actions, num_rewards,
                 ob_space, actor_critic, env_model)
 
-    imagined_states, imagined_rewards = imagination.imagine(state, sess)
+    imagined_states, imagined_rewards = imagination.imagine(sess, env, state)
     return imagined_states, imagined_rewards
 
 if __name__ == '__main__':
-    envs = [make_env() for i in range(N_ENVS)]
-    envs = SubprocVecEnv(envs)
     env = GridworldEnv("side_effects_sokoban")
-    env.reset()
-
-    ob_space = envs.observation_space.shape
-    ac_space = envs.action_space
-    
-    obs = envs.reset()
-    ob_np = np.copy(obs)
-    ob_np = np.squeeze(ob_np, axis=1)
-    ob_np = np.expand_dims(ob_np, axis=3)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    imagined_states, imagined_rewards = generate_trajectory(sess, ob_np, ob_space, ac_space)
-    imagined_states, imagined_rewards = imagined_states[0], imagined_rewards[0]
-    imagined_rewards = np.argmax(imagined_rewards, axis=1)
+    state = env.reset()
+    imagined_states, imagined_rewards = generate_trajectory(sess, env, state)
+    #imagined_states, imagined_rewards = imagined_states[0], imagined_rewards[0]
+    #imagined_rewards = np.argmax(imagined_rewards, axis=1)
 
-    for i in range(imagined_states.shape[0]):
+    for i in range(len(imagined_states)): # .shape[0]
         _, _, _, _ = env.step(ac_space.sample())
-        env.render("human", imagined_states[i, 0, :, :], sokoban_rewards[imagined_rewards[i]])
+        env.render("human", imagined_states[i], imagined_rewards[i])
         time.sleep(0.2)
