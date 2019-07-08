@@ -170,7 +170,17 @@ def generate_trajectory(sess, state, ob_space, ac_space):
                 ob_space, actor_critic, env_model)
 
     imagined_states, imagined_rewards = imagination.imagine(state, sess)
-    return imagined_states, imagined_rewards
+    imagined_states, imagined_rewards = imagined_states[0], imagined_rewards[0]
+    imagined_rewards = np.argmax(imagined_rewards, axis=1)
+
+    imagined_states_list, imagined_rewards_list = [],  []
+    for i in range(imagined_states.shape[0]):
+        imagined_states_list.append(imagined_states[i, 0, :, :])
+        imagined_rewards_list.append(sokoban_rewards[imagined_rewards[i]])
+        if(sokoban_rewards[imagined_rewards[i]] == 49):
+            break
+
+    return imagined_states_list, imagined_rewards_list
 
 if __name__ == '__main__':
     envs = [make_env() for i in range(N_ENVS)]
@@ -191,10 +201,9 @@ if __name__ == '__main__':
     sess = tf.Session(config=config)
 
     imagined_states, imagined_rewards = generate_trajectory(sess, ob_np, ob_space, ac_space)
-    imagined_states, imagined_rewards = imagined_states[0], imagined_rewards[0]
-    imagined_rewards = np.argmax(imagined_rewards, axis=1)
 
-    for i in range(imagined_states.shape[0]):
+    for i in range(len(imagined_states)):
         _, _, _, _ = env.step(ac_space.sample())
-        env.render("human", imagined_states[i, 0, :, :], sokoban_rewards[imagined_rewards[i]])
+        print(imagined_states[i], imagined_rewards[i])
+        #env.render("human", imagined_states[i], imagined_rewards[i])
         time.sleep(0.2)
