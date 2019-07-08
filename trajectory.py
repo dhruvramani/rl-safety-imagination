@@ -125,6 +125,7 @@ class ImaginationCore(object):
             range(batch_size)])
 
         action = action.reshape((-1,))
+        action, _, _ = self.actor_critic.act(state)
 
         rollout_batch_size = batch_size * self.num_actions
 
@@ -152,7 +153,7 @@ class ImaginationCore(object):
 
             rollout_states.append(imagined_state)
             rollout_rewards.append(onehot_reward)
-
+            _, _, done, _ = env.step()
             state = imagined_state
             state = state.reshape(-1, nw, nh, nc)
             action, _, _ = self.actor_critic.act(state)

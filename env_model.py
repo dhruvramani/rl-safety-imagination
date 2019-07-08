@@ -10,7 +10,7 @@ from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoba
 
 # How many iterations we are training the environment model for.
 ENV_NAME = "side_effects_sokoban"
-NUM_UPDATES = 100000
+NUM_UPDATES = 20000
 LOG_INTERVAL = 100
 N_ENVS = 16
 N_STEPS = 5
@@ -137,8 +137,8 @@ def play_games(actor_critic, envs, frames):
         states = np.squeeze(states, axis=1)
         states = np.expand_dims(states, axis=3)
         
-        actions = envs.action_space.sample()
-        #actions, _, _ = actor_critic.act(states)
+        #actions = envs.action_space.sample()
+        actions, _, _ = actor_critic.act(states)
         next_states, rewards, dones, _ = envs.step(actions)
 
         yield frame_idx, states, actions, rewards, next_states, dones
