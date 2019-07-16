@@ -9,7 +9,7 @@ The A2C is a standard one, self-explanatory. The env_model takes the current sta
 ## Installation
 Other than your standard ML/RL ammunition, you'll need to install a Gym wrapper for the original [environments](https://github.com/deepmind/ai-safety-gridworlds) by DeepMind. Thanks to [@david-lindner](https://github.com/david-lindner), 
 ```shell
-git clone https://github.com/david-lindner/safe-grid-gym
+git clone https://github.com/dhruvramani/safe-grid-gym
 cd safe-grid-gym
 python3 setup.py install
 ```

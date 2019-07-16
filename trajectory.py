@@ -31,10 +31,9 @@ ENV_MODEL_PATH = 'weights/env_model.ckpt'
 END_REWARD = 49
 MAX_TREE_STEPS = 8
 
-'''
-FINAL_STATE = []
-BAD_STATES = []
-'''
+#FINAL_STATE = []
+#BAD_STATES = [np.asarray()]
+
 # Softmax function for numpy taken from
 # https://nolanbconaway.github.io/blog/2017/softmax-numpy
 def softmax(X, theta = 1.0, axis = None):
@@ -212,6 +211,7 @@ def generate_tree(sess, state, ob_space, ac_space, reward=-1, count=0):
     node = ImaginedNode(state, reward)
     print(count)
     if(reward == END_REWARD or count > MAX_TREE_STEPS):
+        node.children.extend([None for i in range(num_actions)])
         return node
 
     for action in range(num_actions):
@@ -246,7 +246,8 @@ if __name__ == '__main__':
     sess = tf.Session(config=config)
 
     node = generate_tree(sess, ob_np, ob_space, ac_space)
-    path = [2, 1, 3, 1, 3, 1, 3]
+    #path = [2, 1, 3, 1, 3, 1, 3]
+    path = [1, 3, 3, 3, 1, 1]
     count = 0
     while(node is not None):
         #_, _, _, _ = env.step(ac_space.sample())
