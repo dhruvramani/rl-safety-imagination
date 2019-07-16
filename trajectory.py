@@ -17,7 +17,7 @@ np.set_printoptions(threshold=sys.maxsize)
 
 # Hyperparameter of how far ahead in the future the agent "imagines"
 # Currently this is specifying one frame in the future.
-NUM_ROLLOUTS = 1
+NUM_ROLLOUTS = 10
 
 # Hidden size in RNN imagination encoder.
 HIDDEN_SIZE = 256
@@ -172,14 +172,17 @@ def generate_trajectory(sess, state, ob_space, ac_space):
                 ob_space, actor_critic, env_model)
 
     imagined_states, imagined_rewards = imagination.imagine(state, sess)
-    imagined_states, imagined_rewards = imagined_states[0], imagined_rewards[0]
-    imagined_rewards = np.argmax(imagined_rewards, axis=1)
-
+    #print(len(imagined_states), imagined_states[0].shape)
+    #return imagined_states, imagined_rewards
     imagined_states_list, imagined_rewards_list = [],  []
-    for i in range(imagined_states.shape[0]):
-        imagined_states_list.append(imagined_states[i, 0, :, :])
-        imagined_rewards_list.append(sokoban_rewards[imagined_rewards[i]])
-        if(sokoban_rewards[imagined_rewards[i]] == 49):
+    for i in range(len(imagined_states)):
+        imagined_state, imagined_reward = imagined_states[i], imagined_rewards[i]
+        imagined_reward = np.argmax(imagined_reward, axis=1)
+
+        #for i in range(imagined_states.shape[0]):
+        imagined_states_list.append(imagined_state[0, 0, :, :])
+        imagined_rewards_list.append(sokoban_rewards[imagined_reward[0]])
+        if(sokoban_rewards[imagined_reward[0]] == 49):
             break
 
     return imagined_states_list, imagined_rewards_list
@@ -227,7 +230,7 @@ if __name__ == '__main__':
     imagined_states, imagined_rewards = generate_trajectory(sess, ob_np, ob_space, ac_space)
 
     for i in range(len(imagined_states)):
-        #_, _, _, _ = env.step(ac_space.sample())
-        print(imagined_states[i], imagined_rewards[i])
-        #env.render("human", imagined_states[i], imagined_rewards[i])
-        time.sleep(0.2)
+        _, _, _, _ = env.step(ac_space.sample())
+        #print(imagined_states[i], imagined_rewards[i])
+        env.render("human", imagined_states[i], imagined_rewards[i])
+        time.sleep(0.4)
