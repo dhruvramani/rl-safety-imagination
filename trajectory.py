@@ -29,6 +29,7 @@ A2C_MODEL_PATH = 'weights/a2c_5100.ckpt'
 ENV_MODEL_PATH = 'weights/env_model.ckpt'
 
 END_REWARD = 49
+MAX_TREE_STEPS = 8
 
 '''
 FINAL_STATE = []
@@ -197,8 +198,8 @@ class ImaginedNode(object):
     def add_child(self, obj):
         self.children.append(obj)
 
-def generate_tree(sess, state, ob_space, ac_space, reward=-1):
-    nc, nw, nh = self.ob_space
+def generate_tree(sess, state, ob_space, ac_space, reward=-1, count=0):
+    nc, nw, nh = ob_space
     num_actions = ac_space.n
     num_rewards = len(sokoban_rewards)
 
@@ -209,14 +210,18 @@ def generate_tree(sess, state, ob_space, ac_space, reward=-1):
                 ob_space, actor_critic, env_model)
 
     node = ImaginedNode(state, reward)
-    if(reward == END_REWARD):
+    print(count)
+    if(reward == END_REWARD or count > MAX_TREE_STEPS):
         return node
 
     for action in range(num_actions):
         imagined_states, imagined_rewards = imagination.imagine(state, sess, action)
         imagined_state, imagined_reward = imagined_states[0][0, 0, :, :], sokoban_rewards[np.argmax(imagined_rewards[0], axis=1)[0]]
+        if(np.array_equal(state.reshape(nw, nh), imagined_state)):
+            node.add_child(None)
+            continue
         imagined_state = imagined_state.reshape(-1, nw, nh, nc)
-        node.add_child(generate_tree(sess, imagined_state, ob_space, ac_space, imagined_reward))
+        node.add_child(generate_tree(sess, imagined_state, ob_space, ac_space, imagined_reward, count + 1))
 
     return node
 
@@ -229,7 +234,8 @@ if __name__ == '__main__':
 
     ob_space = envs.observation_space.shape
     ac_space = envs.action_space
-    
+    nc, nw, nh = ob_space
+
     obs = envs.reset()
     ob_np = np.copy(obs)
     ob_np = np.squeeze(ob_np, axis=1)
@@ -240,6 +246,18 @@ if __name__ == '__main__':
     sess = tf.Session(config=config)
 
     node = generate_tree(sess, ob_np, ob_space, ac_space)
+    path = [2, 1, 3, 1, 3, 1, 3]
+    count = 0
+    while(node is not None):
+        #_, _, _, _ = env.step(ac_space.sample())
+        imagined_state = node.imagined_state.reshape(nw, nh)
+        print(imagined_state, node.imagined_reward)
+        #env.render("human", imagined_state, node.imagined_reward)
+        node = node.children[path[count]]
+        count += 1
+        time.sleep(0.4)
+
+
 
     '''
     imagined_states, imagined_rewards = generate_trajectory(sess, ob_np, ob_space, ac_space)
