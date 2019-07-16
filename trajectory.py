@@ -22,11 +22,13 @@ NUM_ROLLOUTS = 10
 # Hidden size in RNN imagination encoder.
 HIDDEN_SIZE = 256
 
-N_ENVS = 16
+N_ENVS = 1
 N_STEPS = 5
 
 A2C_MODEL_PATH = 'weights/a2c_5100.ckpt'
 ENV_MODEL_PATH = 'weights/env_model.ckpt'
+
+END_REWARD = 49
 
 '''
 FINAL_STATE = []
@@ -172,8 +174,6 @@ def generate_trajectory(sess, state, ob_space, ac_space):
                 ob_space, actor_critic, env_model)
 
     imagined_states, imagined_rewards = imagination.imagine(state, sess)
-    #print(len(imagined_states), imagined_states[0].shape)
-    #return imagined_states, imagined_rewards
     imagined_states_list, imagined_rewards_list = [],  []
     for i in range(len(imagined_states)):
         imagined_state, imagined_reward = imagined_states[i], imagined_rewards[i]
@@ -182,12 +182,12 @@ def generate_trajectory(sess, state, ob_space, ac_space):
         #for i in range(imagined_states.shape[0]):
         imagined_states_list.append(imagined_state[0, 0, :, :])
         imagined_rewards_list.append(sokoban_rewards[imagined_reward[0]])
-        if(sokoban_rewards[imagined_reward[0]] == 49):
+        if(sokoban_rewards[imagined_reward[0]] == END_REWARD):
             break
 
     return imagined_states_list, imagined_rewards_list
 
-'''
+
 class ImaginedNode(object):
     def __init__(self, imagined_state, imagined_reward):
         self.imagined_state  = imagined_state
@@ -197,7 +197,8 @@ class ImaginedNode(object):
     def add_child(self, obj):
         self.children.append(obj)
 
-def generate_tree(sess, state, ob_space, ac_space):
+def generate_tree(sess, state, ob_space, ac_space, reward=-1):
+    nc, nw, nh = self.ob_space
     num_actions = ac_space.n
     num_rewards = len(sokoban_rewards)
 
@@ -207,7 +208,18 @@ def generate_tree(sess, state, ob_space, ac_space):
     imagination = ImaginationCore(1, num_actions, num_rewards,
                 ob_space, actor_critic, env_model)
 
-'''
+    node = ImaginedNode(state, reward)
+    if(reward == END_REWARD):
+        return node
+
+    for action in range(num_actions):
+        imagined_states, imagined_rewards = imagination.imagine(state, sess, action)
+        imagined_state, imagined_reward = imagined_states[0][0, 0, :, :], sokoban_rewards[np.argmax(imagined_rewards[0], axis=1)[0]]
+        imagined_state = imagined_state.reshape(-1, nw, nh, nc)
+        node.add_child(generate_tree(sess, imagined_state, ob_space, ac_space, imagined_reward))
+
+    return node
+
 
 if __name__ == '__main__':
     envs = [make_env() for i in range(N_ENVS)]
@@ -227,6 +239,9 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
+    node = generate_tree(sess, ob_np, ob_space, ac_space)
+
+    '''
     imagined_states, imagined_rewards = generate_trajectory(sess, ob_np, ob_space, ac_space)
 
     for i in range(len(imagined_states)):
@@ -234,3 +249,4 @@ if __name__ == '__main__':
         #print(imagined_states[i], imagined_rewards[i])
         env.render("human", imagined_states[i], imagined_rewards[i])
         time.sleep(0.4)
+    '''
