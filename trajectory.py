@@ -28,6 +28,10 @@ N_STEPS = 5
 A2C_MODEL_PATH = 'weights/a2c_5100.ckpt'
 ENV_MODEL_PATH = 'weights/env_model.ckpt'
 
+'''
+FINAL_STATE = []
+BAD_STATES = []
+'''
 # Softmax function for numpy taken from
 # https://nolanbconaway.github.io/blog/2017/softmax-numpy
 def softmax(X, theta = 1.0, axis = None):
@@ -111,7 +115,7 @@ class ImaginationCore(object):
         self.env_model    = env_model
 
 
-    def imagine(self, state, sess):
+    def imagine(self, state, sess, act=None):
         nc, nw, nh = self.ob_space
 
         batch_size = state.shape[0]
@@ -119,11 +123,9 @@ class ImaginationCore(object):
         state = np.tile(state, [self.num_actions, 1, 1, 1, 1])
         state = state.reshape(-1, nw, nh, nc)
 
-        action = np.array([[[i] for i in range(self.num_actions)] for j in
-            range(batch_size)])
-
-        action = action.reshape((-1,))
-        action, _, _ = self.actor_critic.act(state)
+        action = act
+        if(act is None):
+            action, _, _ = self.actor_critic.act(state)
 
         rollout_batch_size = batch_size * self.num_actions
 
@@ -182,6 +184,28 @@ def generate_trajectory(sess, state, ob_space, ac_space):
 
     return imagined_states_list, imagined_rewards_list
 
+'''
+class ImaginedNode(object):
+    def __init__(self, imagined_state, imagined_reward):
+        self.imagined_state  = imagined_state
+        self.imagined_reward = imagined_reward
+        self.children = []
+
+    def add_child(self, obj):
+        self.children.append(obj)
+
+def generate_tree(sess, state, ob_space, ac_space):
+    num_actions = ac_space.n
+    num_rewards = len(sokoban_rewards)
+
+    actor_critic = get_cache_loaded_a2c(sess, N_ENVS, N_STEPS, ob_space, ac_space)
+    env_model = get_cache_loaded_env_model(sess, ob_space, num_actions)
+
+    imagination = ImaginationCore(1, num_actions, num_rewards,
+                ob_space, actor_critic, env_model)
+
+'''
+
 if __name__ == '__main__':
     envs = [make_env() for i in range(N_ENVS)]
     envs = SubprocVecEnv(envs)
@@ -203,7 +227,7 @@ if __name__ == '__main__':
     imagined_states, imagined_rewards = generate_trajectory(sess, ob_np, ob_space, ac_space)
 
     for i in range(len(imagined_states)):
-        _, _, _, _ = env.step(ac_space.sample())
+        #_, _, _, _ = env.step(ac_space.sample())
         print(imagined_states[i], imagined_rewards[i])
         #env.render("human", imagined_states[i], imagined_rewards[i])
         time.sleep(0.2)
