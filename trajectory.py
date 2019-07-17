@@ -209,7 +209,6 @@ def generate_tree(sess, state, ob_space, ac_space, reward=-1, count=0):
                 ob_space, actor_critic, env_model)
 
     node = ImaginedNode(state, reward)
-    print(count)
     if(reward == END_REWARD or count > MAX_TREE_STEPS):
         node.children.extend([None for i in range(num_actions)])
         return node
@@ -245,9 +244,10 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
+    print("=> Generating Tree")
     node = generate_tree(sess, ob_np, ob_space, ac_space)
     #path = [2, 1, 3, 1, 3, 1, 3]
-    path = [1, 3, 3, 3, 1, 1]
+    path = [1, 3, 3, 1, 1]
     count = 0
     while(node is not None):
         #_, _, _, _ = env.step(ac_space.sample())
