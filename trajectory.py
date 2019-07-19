@@ -258,7 +258,7 @@ def generate_tree(sess, state, reward=-1, count=0):
     return node
 
 
-def plot_predictions(sess, ob_space, ac_space):
+def plot_predictions(sess):
     env = GridworldEnv("side_effects_sokoban")
     num_actions = ac_space.n
     nc, nw, nh = ob_space
@@ -307,6 +307,8 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
+    plot_predictions(sess)
+    '''
     # TREEEEEE lol
     print("=> Generating Tree")
     node = generate_tree(sess, ob_np)
@@ -322,7 +324,6 @@ if __name__ == '__main__':
         count += 1
         time.sleep(0.4)
 
-    '''
     # NOT-SO-TREEEEE lolol
     imagined_states, imagined_rewards = generate_trajectory(sess, ob_np)
 
