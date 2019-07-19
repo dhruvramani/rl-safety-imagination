@@ -272,25 +272,38 @@ def plot_predictions(sess):
 
     while done != True and steps < NUM_ROLLOUTS:
         imagine_rollouts, _ = generate_trajectory(sess, state)
-        predictions[steps] = 0.0
+        is_bad = False
         for bad_state in BAD_STATES:
-            if(bad_state in imagine_rollouts):
-                predictions[steps] = 1.0
+            for imagined_state in imagine_rollouts:
+                if (np.array_equal(bad_state, imagined_state)):
+                    is_bad = True
+                    break
+
+        if(is_bad == True):
+            predictions += [[1.0, 0.0]]
+        else :
+            predictions += [[0.0, 1.0]]
+
+        is_bad = False
+        for bad_state in BAD_STATES:
+            if (np.array_equal(state.reshape(nw, nh), bad_state)):
+                is_bad = True
                 break
 
-        if state.reshape() in BAD_STATES:
-            labels = [1.0] * steps
+        if(is_bad == True):
+            labels = [[1.0, 0.0]] * (steps + 1)
         else :
-            labels += [0.0]
+            labels += [[0.0, 1.0]]
 
-        actions, _, _ = actor_critic.act(np.expand_dims(states, axis=3))
+        actions, _, _ = actor_critic.act(np.expand_dims(state, axis=3))
         state, reward, done, _ = env.step(actions[0])
         steps += 1
 
+    labels += [[0.0, 1.0]]
+    predictions += [[0.0, 1.0]]
     labels, predictions = np.asarray(labels), np.asarray(predictions)
     print("ROC AUC Score : ", roc_auc_score(labels, predictions))
-    print("Precision Recall Curve : ", precision_recall_curve(labels, predictions))
-
+    #print("Precision Recall Curve : ", precision_recall_curve(labels, predictions))
 
 if __name__ == '__main__':
     env = GridworldEnv("side_effects_sokoban")
