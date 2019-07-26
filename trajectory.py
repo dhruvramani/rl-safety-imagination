@@ -253,7 +253,7 @@ def generate_tree(sess, state, reward=-1, count=0):
             node.add_child(None)
             continue
         imagined_state = imagined_state.reshape(-1, nw, nh, nc)
-        node.add_child(generate_tree(sess, imagined_state, ob_space, ac_space, imagined_reward, count + 1))
+        node.add_child(generate_tree(sess, imagined_state, imagined_reward, count + 1))
 
     return node
 
@@ -320,13 +320,13 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    plot_predictions(sess)
-    '''
+    #plot_predictions(sess)
+    
     # TREEEEEE lol
     print("=> Generating Tree")
     node = generate_tree(sess, ob_np)
-    #path = [2, 1, 3, 1, 3, 1, 3]
-    path = [1, 3, 3, 1, 1]
+    path = [2, 1, 3, 1, 3, 1, 3]
+    #path = [1, 3, 3, 1, 1]
     count = 0
     while(node is not None):
         #_, _, _, _ = env.step(ac_space.sample())
@@ -337,6 +337,8 @@ if __name__ == '__main__':
         count += 1
         time.sleep(0.4)
 
+    
+    '''
     # NOT-SO-TREEEEE lolol
     imagined_states, imagined_rewards = generate_trajectory(sess, ob_np)
 
@@ -345,4 +347,5 @@ if __name__ == '__main__':
         #print(imagined_states[i], imagined_rewards[i])
         env.render("human", imagined_states[i], imagined_rewards[i])
         time.sleep(0.4)
+    
     '''
