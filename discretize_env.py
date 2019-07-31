@@ -11,6 +11,7 @@ pixel_mapping = {
     'GOAL_CHR'  : 5.0,
 }
 
+CONTROLS = ["UP", "DOWN", "LEFT", "RIGHT"]
 _MAX_PIXEL_VAL = 5 
 _NUM_PIXELS = _MAX_PIXEL_VAL + 1
 
@@ -44,6 +45,8 @@ def target_to_pix(imagined_states):
 
 def rewards_to_target(rewards):
     target = []
+    if(isinstance(rewards, int) or isinstance(rewards, float)):
+        rewards = [int(rewards)]
     for reward in rewards:
         target.append(reward_to_categorical[reward])
     return target

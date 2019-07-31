@@ -1,4 +1,5 @@
 import os
+import copy
 import tensorflow as tf
 from safe_grid_gym.envs.gridworlds_env import GridworldEnv
 from a2c import get_actor_critic, CnnPolicy
@@ -10,10 +11,11 @@ from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoba
 
 # How many iterations we are training the environment model for.
 ENV_NAME = "side_effects_sokoban"
-NUM_UPDATES = 20000
+NUM_UPDATES = 200000
 LOG_INTERVAL = 100
-N_ENVS = 16
+N_ENVS = 1 #16
 N_STEPS = 5
+N_ACTIONS = 4
 
 # Replace this with the location of your own weights.
 A2C_WEIGHTS = 'weights/a2c_5100.ckpt'
@@ -134,16 +136,28 @@ def play_games(actor_critic, envs, frames):
     for frame_idx in range(frames):
 
         states = np.copy(states)
-        states = np.squeeze(states, axis=1)
+        #states = np.squeeze(states, axis=1)
         states = np.expand_dims(states, axis=3)
         
-        #actions = envs.action_space.sample()
-        actions, _, _ = actor_critic.act(states)
+        actions = envs.action_space.sample()
+        #actions, _, _ = actor_critic.act(states)
+        #print(actions)
         next_states, rewards, dones, _ = envs.step(actions)
 
         yield frame_idx, states, actions, rewards, next_states, dones
         
-        states = next_states
+        if(dones == True):
+            #if int(frame_idx % 20) == 0: 
+            states = envs.reset()
+            rare_path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
+            for action in rare_path:
+                states = np.expand_dims(states, axis=3)
+                next_states, rewards, dones, _ = envs.step(action)
+                yield frame_idx, states, actions, rewards, next_states, dones
+                states = next_states
+            states = envs.reset()
+        else:
+            states = next_states
 
 
 class EnvModelData(object):
@@ -163,8 +177,9 @@ class EnvModelData(object):
 
 
 if __name__ == '__main__':
-    envs = [make_env() for i in range(N_ENVS)]
-    envs = SubprocVecEnv(envs)
+    #envs = [make_env() for i in range(N_ENVS)]
+    #envs = SubprocVecEnv(envs)
+    envs = GridworldEnv("side_effects_sokoban")
 
     ob_space = envs.observation_space.shape
     ac_space = envs.action_space
@@ -222,10 +237,10 @@ if __name__ == '__main__':
                 print('%i => Loss : %.4f, Reward Loss : %.4f, Image Loss : %.4f' % (frame_idx, l, reward_loss, image_loss))
                 
                 validation_counter = 0
-                for val_frame_idx, val_states, val_actions, val_rewards, val_next_states, val_dones in play_games(actor_critic, envs, 50):
+                '''
+                for frame_idx, states, actions, rewards, next_states, dones in tqdm(play_games(actor_critic, envs, NUM_UPDATES), total=NUM_UPDATES):                    
                     val_target_state = pix_to_target(next_states)
                     val_target_reward = rewards_to_target(rewards)
-
                     val_onehot_actions = np.zeros((N_ENVS, num_actions, width, height))
                     val_onehot_actions[range(N_ENVS), val_actions] = 1
                     val_onehot_actions = val_onehot_actions.transpose(0, 2, 3, 1)
@@ -236,7 +251,7 @@ if __name__ == '__main__':
 
                     val_writer.add_summary(val_summary, validation_counter + 50 * (frame_idx) / LOG_INTERVAL)
                 validation_counter += 1
-
+                '''
             train_writer.add_summary(summary, frame_idx)
 
         saver.save(sess, 'weights/env_model.ckpt')
