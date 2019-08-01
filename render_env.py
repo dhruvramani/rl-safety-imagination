@@ -7,7 +7,7 @@ from env_model import make_env, create_env_model
 from utils import SubprocVecEnv
 from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoban_rewards
 from a2c import get_actor_critic, CnnPolicy
-from trajectory import convert_target_to_real
+from imagine import convert_target_to_real
 from safe_grid_gym.envs.gridworlds_env import GridworldEnv
 
 nenvs = 16
@@ -33,7 +33,7 @@ with tf.Session() as sess:
     with tf.variable_scope('actor'):
         actor_critic = get_actor_critic(sess, nenvs, nsteps, ob_space,
                 ac_space, CnnPolicy, should_summary=False)
-    actor_critic.load('weights/a2c_5100.ckpt')
+    actor_critic.load('weights/a2c_1000.ckpt')
     
     with tf.variable_scope('env_model'): 
         env_model = create_env_model(ob_space, num_actions,_NUM_PIXELS,
@@ -52,6 +52,7 @@ with tf.Session() as sess:
         # Change so actions are the 'depth of the image' as tf expects
         onehot_actions = onehot_actions.transpose(0, 2, 3, 1)
 
+        '''
         s, r = sess.run([env_model.imag_state, 
                                         env_model.imag_reward], 
                                        feed_dict={
@@ -60,12 +61,13 @@ with tf.Session() as sess:
             })
         
         s, r = convert_target_to_real(1, nw, nh, nc, s, r)
-        
+        '''
         states, reward, done, _ = env.step(actions[0])
+        env.render()
         # NOTE : render screws up if reward isnt proper
- 
+        '''
         env.render("human", states[0, :, :], reward)
         #env.render("human", s[0, 0, :, :], sokoban_rewards[r[0]])
         time.sleep(0.2)
-
+        '''
 env.close()

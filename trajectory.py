@@ -2,6 +2,7 @@ import os
 import sys
 import gym
 import time
+import copy
 import logging
 import numpy as np
 from tqdm import tqdm
@@ -15,6 +16,7 @@ from env_model import make_env, create_env_model
 from safe_grid_gym.envs.gridworlds_env import GridworldEnv
 from discretize_env import pix_to_target, target_to_pix, rewards_to_target, _NUM_PIXELS, CONTROLS, sokoban_rewards
 
+# TODO - REMOVE ACTOR CRITIC WHERE NOT REQUIRED
 N_ENVS = 1
 N_STEPS = 5
 END_REWARD = 49
@@ -101,6 +103,7 @@ def get_cache_loaded_env_model(sess, ob_space, num_actions):
 
     return g_env_model
 
+'''
 def generate_trajectory(sess, state):
     num_actions = ac_space.n
     num_rewards = len(sokoban_rewards)
@@ -124,6 +127,7 @@ def generate_trajectory(sess, state):
             break
 
     return imagined_states_list, imagined_rewards_list
+'''
 
 class ImaginedNode(object):
     def __init__(self, imagined_state, imagined_reward):
@@ -134,15 +138,15 @@ class ImaginedNode(object):
     def add_child(self, obj):
         self.children.append(obj)
 
-def search_node(root, state):
+def search_node(root, base_state):
     if(root is not None):
-        imagined_state = root.imagined_state
+        imagined_state = copy.deepcopy(root.imagined_state)
         imagined_state = imagined_state.reshape(nc, nw, nh)
         imagined_state[np.where(imagined_state == 2.0)] = 1.0
-        if(np.array_equal(imagined_state, state)):
+        if(np.array_equal(imagined_state, base_state)):
             return True
         for child in root.children:
-            found = search_node(child, state)
+            found = search_node(child, base_state)
             if(found == True):
                 return found
     return False
@@ -152,12 +156,12 @@ def generate_tree(sess, state, reward=-1, count=0):
     num_actions = ac_space.n
     num_rewards = len(sokoban_rewards)
 
-    actor_critic = get_cache_loaded_a2c(sess, N_ENVS, N_STEPS, ob_space, ac_space)
     env_model = get_cache_loaded_env_model(sess, ob_space, num_actions)
 
-    imagination = ImaginationCore(1, num_actions, num_rewards,
-                ob_space, actor_critic, env_model)
+    imagination = ImaginationCore(num_actions, num_rewards,
+                ob_space, env_model)
 
+    state = state.reshape(-1, nw, nh, nc)
     node = ImaginedNode(state, reward)
     if(reward == END_REWARD or count > MAX_TREE_STEPS):
         node.children.extend([None for i in range(num_actions)])
@@ -180,7 +184,8 @@ def safe_action(agent, tree, base_state, unsafe_action):
     values = {a : agent.critique(imagined_states[a].reshape(1, nw, nh, nc)) for a in imagined_states.keys()}
     max_a = max(values.keys(), key=lambda a:values[a])
     return [max_a]
-
+'''
+# NOTE : Uncomment after getting proper A2C weights
 def act_safely(sess):
     env = GridworldEnv("side_effects_sokoban")
     num_actions = ac_space.n
@@ -257,6 +262,7 @@ def plot_predictions(sess):
     labels, predictions = np.asarray(labels), np.asarray(predictions)
     print("ROC AUC Score : ", roc_auc_score(labels, predictions))
     #print("Precision Recall Curve : ", precision_recall_curve(labels, predictions))
+'''
 
 if __name__ == '__main__':
     env = GridworldEnv("side_effects_sokoban")
@@ -273,14 +279,15 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    act_safely(sess)
+    #act_safely(sess)
     #plot_predictions(sess)
     
     
     # TREEEEEE lol
-    '''
+    
     print("=> Generating Tree")
     node = generate_tree(sess, ob_np)
+    #trees = [copy.deepcopy(node)] * 5
     #path = [2, 1, 3, 1, 3, 0, 1, 3]
     path = [2, 1, 3, 1, 3, 3, 0, 2, 2, 1, 3, 1, 3]
     #path = [1, 3, 3, 1, 1]
@@ -292,7 +299,6 @@ if __name__ == '__main__':
         #env.render("human", imagined_state, node.imagined_reward)
         node = node.children[path[count]]
         count += 1
-    '''
     
     '''
     # NOT-SO-TREEEEE lolol
