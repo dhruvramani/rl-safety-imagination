@@ -141,7 +141,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
             mb_dones.append(dones)
 
             if(update % LOG_INTERVAL == 0 and DEBUG == True):
-                print("Action : ", CONTROLS[actions[0]], " - Safe :", safe[0]," - Done : ", dones[0])
+                print("Action : ", CONTROLS[actions[0]], " - Safe :", bool(safe[0])," - Done : ", dones[0])
                 _ = input("")
 
             obs, rewards, dones, _ = envs.step(actions)

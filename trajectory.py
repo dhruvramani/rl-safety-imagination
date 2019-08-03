@@ -297,8 +297,8 @@ if __name__ == '__main__':
     node = generate_tree(sess, ob_np)
 
     #path = [2, 1, 3, 1, 3, 0, 1, 3]
-    #path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
-    path = [1, 3, 3, 1, 1]
+    path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
+    #path = [1, 3, 3, 1, 1]
     count = 0
     done = False
     while(done != True):
