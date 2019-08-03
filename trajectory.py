@@ -144,7 +144,7 @@ def search_node(root, base_state):
         imagined_state = copy.deepcopy(root.imagined_state)
         imagined_state = imagined_state.reshape(nc, nw, nh)
         imagined_state[np.where(imagined_state == 2.0)] = 1.0
-        if(np.array_equal(imagined_state, base_state) and root.imagined_reward != END_REWARD):
+        if(np.array_equal(imagined_state, base_state)):
             return True
         for child in root.children:
             found = search_node(child, base_state)
@@ -296,8 +296,8 @@ if __name__ == '__main__':
     node = generate_tree(sess, ob_np)
 
     #path = [2, 1, 3, 1, 3, 0, 1, 3]
-    #path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
-    path = [1, 3, 3, 1, 1]
+    path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
+    #path = [1, 3, 3, 1, 1]
     count = 0
     done = False
     while(done != True):
