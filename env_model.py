@@ -11,9 +11,9 @@ from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoba
 
 # How many iterations we are training the environment model for.
 ENV_NAME = "side_effects_sokoban"
-NUM_UPDATES = 20000
+NUM_UPDATES = 50000
 LOG_INTERVAL = 100
-N_ENVS = 10
+N_ENVS = 1
 N_STEPS = 5
 N_ACTIONS = 4
 
@@ -156,7 +156,7 @@ def play_games(envs, frames):
             for action in rare_path:
                 states = states.reshape(-1, nw, nh, nc)
                 next_states, rewards, dones, _ = envs.step([action] * N_ENVS)
-                yield frame_idx, states, actions, rewards, next_states, dones
+                yield frame_idx, states, action, rewards, next_states, dones
                 states = next_states
             states = envs.reset()
         else:
