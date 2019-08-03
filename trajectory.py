@@ -140,11 +140,11 @@ class ImaginedNode(object):
 
 def search_node(root, base_state):
     if(root is not None):
-        print(root.imagined_state.reshape(nc, nw, nh))
+        #print(root.imagined_state.reshape(nc, nw, nh))
         imagined_state = copy.deepcopy(root.imagined_state)
         imagined_state = imagined_state.reshape(nc, nw, nh)
         imagined_state[np.where(imagined_state == 2.0)] = 1.0
-        if(np.array_equal(imagined_state, base_state)):
+        if(np.array_equal(imagined_state, base_state) and root.imagined_reward != END_REWARD):
             return True
         for child in root.children:
             found = search_node(child, base_state)
