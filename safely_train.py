@@ -11,6 +11,7 @@ from safe_grid_gym.envs.gridworlds_env import GridworldEnv
 
 #from i2a import I2aPolicy
 from utils import SubprocVecEnv
+from discretize_env import CONTROLS
 from a2c import CnnPolicy, get_actor_critic
 from trajectory import generate_tree, search_node
 
@@ -19,6 +20,7 @@ N_ENVS = 16
 N_STEPS = 9
 END_REWARD = 49
 S_ALPHA = 2
+DEBUG = True
 
 # Total number of iterations (taking into account number of environments and
 # number of steps). You wish to train for.
@@ -107,22 +109,28 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
     base_state[np.where(base_state == 2.0)] = 1.0
     print(base_state)
 
+    base_tree = generate_tree(sess, state)
     for update in tqdm(range(load_count + 1, TOTAL_TIMESTEPS + 1)):
         # mb stands for mini batch
-        trees = generate_tree(sess, state)
-        trees = [copy.deepcopy(trees)] * N_ENVS
+        trees = [copy.deepcopy(base_tree)] * N_ENVS
         mb_obs, mb_rewards, mb_actions, mb_values, mb_dones = [],[],[],[],[]
         for n in range(N_STEPS):
-            
             ob_np = np.copy(obs)
             ob_np = np.squeeze(ob_np, axis=1)
             ob_np = np.expand_dims(ob_np, axis=3)
 
-            print_obs = ob_np[0, :, :, :].reshape(nc, nw, nh)
-            print("-- State ---")
-            print(print_obs)
-            print("-- Imagined State --")
-            print(trees[0].imagined_state.reshape(nc, nw, nh))
+            '''
+            for i in range(len(dones)):
+                if(dones[i] == True):
+                    trees[i] = copy.deepcopy(base_tree)
+            '''
+
+            if(update % LOG_INTERVAL == 0 and DEBUG == True):
+                print_obs = ob_np[0, :, :, :].reshape(nc, nw, nh)
+                print("-- State ---")
+                print(print_obs)
+                print("-- Imagined State --")
+                print(trees[0].imagined_state.reshape(nc, nw, nh))
 
             actions, values, _ = actor_critic.act(ob_np)
             safe, trees = is_safe(trees, actions, base_state, dones)
@@ -132,8 +140,9 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
             mb_values.append(values)
             mb_dones.append(dones)
 
-            print("Action : ", actions[0], " - Safe :", safe[0]," - Done : ", dones[0])
-            _ = input("")
+            if(update % LOG_INTERVAL == 0 and DEBUG == True):
+                print("Action : ", CONTROLS[actions[0]], " - Safe :", safe[0]," - Done : ", dones[0])
+                _ = input("")
 
             obs, rewards, dones, _ = envs.step(actions)
 
@@ -147,6 +156,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
             mb_rewards.append(rewards)
 
         mb_dones.append(dones)
+        obs = envs.reset()
 
         #batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=np.float32).reshape(batch_ob_shape) #.swapaxes(1, 0).reshape(batch_ob_shape)

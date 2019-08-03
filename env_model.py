@@ -11,14 +11,26 @@ from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoba
 
 # How many iterations we are training the environment model for.
 ENV_NAME = "side_effects_sokoban"
-NUM_UPDATES = 200000
+NUM_UPDATES = 20000
 LOG_INTERVAL = 100
-N_ENVS = 1 #16
+N_ENVS = 10
 N_STEPS = 5
 N_ACTIONS = 4
 
-# Replace this with the location of your own weights.
-A2C_WEIGHTS = 'weights/a2c_5100.ckpt'
+def make_env():
+    def _thunk():
+        env = GridworldEnv(ENV_NAME)
+        return env
+    return _thunk
+
+envs = [make_env() for i in range(N_ENVS)]
+envs = SubprocVecEnv(envs)
+#envs = GridworldEnv("side_effects_sokoban")
+
+ob_space = envs.observation_space.shape
+nc, nw, nh = ob_space
+ac_space = envs.action_space
+num_actions = envs.action_space.n
 
 def pool_inject(X, batch_size, depth, width, height):
     m = tf.layers.max_pooling2d(X, pool_size=(width, height), strides=(width, height))
@@ -124,35 +136,26 @@ def create_env_model(obs_shape, num_actions, num_pixels, num_rewards,
     return EnvModelData(image, reward, states, onehot_actions, loss,
             reward_loss, image_loss, target_states, target_rewards, opt)
 
-def make_env():
-    def _thunk():
-        env = GridworldEnv(ENV_NAME)
-        return env
-    return _thunk
 
-def play_games(actor_critic, envs, frames):
+def play_games(envs, frames):
     states = envs.reset()
 
     for frame_idx in range(frames):
-
-        states = np.copy(states)
-        #states = np.squeeze(states, axis=1)
-        states = np.expand_dims(states, axis=3)
-        
-        actions = envs.action_space.sample()
+        states = states.reshape(-1, nw, nh, nc)
+        actions = [envs.action_space.sample() for _ in range(N_ENVS)]
         #actions, _, _ = actor_critic.act(states)
         #print(actions)
         next_states, rewards, dones, _ = envs.step(actions)
 
         yield frame_idx, states, actions, rewards, next_states, dones
         
-        if(dones == True):
+        if(True in dones):
             #if int(frame_idx % 20) == 0: 
             states = envs.reset()
             rare_path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
             for action in rare_path:
-                states = np.expand_dims(states, axis=3)
-                next_states, rewards, dones, _ = envs.step(action)
+                states = states.reshape(-1, nw, nh, nc)
+                next_states, rewards, dones, _ = envs.step([action] * N_ENVS)
                 yield frame_idx, states, actions, rewards, next_states, dones
                 states = next_states
             states = envs.reset()
@@ -177,17 +180,9 @@ class EnvModelData(object):
 
 
 if __name__ == '__main__':
-    #envs = [make_env() for i in range(N_ENVS)]
-    #envs = SubprocVecEnv(envs)
-    envs = GridworldEnv("side_effects_sokoban")
-
-    ob_space = envs.observation_space.shape
-    ac_space = envs.action_space
-    num_actions = envs.action_space.n
-
     with tf.Session() as sess:
-        actor_critic = get_actor_critic(sess, N_ENVS, N_STEPS, ob_space, ac_space, CnnPolicy, should_summary=False)
-        actor_critic.load(A2C_WEIGHTS)
+        #actor_critic = get_actor_critic(sess, N_ENVS, N_STEPS, ob_space, ac_space, CnnPolicy, should_summary=False)
+        #actor_critic.load(A2C_WEIGHTS)
 
         with tf.variable_scope('env_model'):
             env_model = create_env_model(ob_space, num_actions, _NUM_PIXELS,
@@ -209,7 +204,7 @@ if __name__ == '__main__':
         val_writer = tf.summary.FileWriter('./env_logs/val/', graph=sess.graph)
         summary_op = tf.summary.merge_all()
 
-        for frame_idx, states, actions, rewards, next_states, dones in tqdm(play_games(actor_critic, envs, NUM_UPDATES), total=NUM_UPDATES):
+        for frame_idx, states, actions, rewards, next_states, dones in tqdm(play_games(envs, NUM_UPDATES), total=NUM_UPDATES):
             target_state = pix_to_target(next_states)
             target_reward = rewards_to_target(rewards)
 

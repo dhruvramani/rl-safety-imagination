@@ -140,6 +140,7 @@ class ImaginedNode(object):
 
 def search_node(root, base_state):
     if(root is not None):
+        print(root.imagined_state.reshape(nc, nw, nh))
         imagined_state = copy.deepcopy(root.imagined_state)
         imagined_state = imagined_state.reshape(nc, nw, nh)
         imagined_state[np.where(imagined_state == 2.0)] = 1.0
@@ -285,17 +286,28 @@ if __name__ == '__main__':
     
     # TREEEEEE lol
     
+    state = envs.reset()
+    base_state = np.copy(state)
+    base_state = base_state.reshape(nc, nw, nh)
+    base_state[np.where(base_state == 2.0)] = 1.0
+    print(base_state)
+
     print("=> Generating Tree")
     node = generate_tree(sess, ob_np)
-    #trees = [copy.deepcopy(node)] * 5
+
     #path = [2, 1, 3, 1, 3, 0, 1, 3]
-    path = [2, 1, 3, 1, 3, 3, 0, 2, 2, 1, 3, 1, 3]
-    #path = [1, 3, 3, 1, 1]
+    #path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
+    path = [1, 3, 3, 1, 1]
     count = 0
-    while(node is not None):
-        #imagined_state, _, _, _ = env.step(path[count])
-        imagined_state = node.imagined_state.reshape(nw, nh)
-        print(imagined_state, node.imagined_reward)
+    done = False
+    while(done != True):
+        next_node = node.children[path[count]]
+        print("-- Current State --")
+        print(state)
+        if(search_node(next_node, base_state) == False):
+            print("Unsafe Action : ", CONTROLS[path[count]])
+        _ = input(" ")
+        state, _, done, _ = env.step(path[count])
         #env.render("human", imagined_state, node.imagined_reward)
         node = node.children[path[count]]
         count += 1
