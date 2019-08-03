@@ -144,7 +144,7 @@ def search_node(root, base_state):
         imagined_state = copy.deepcopy(root.imagined_state)
         imagined_state = imagined_state.reshape(nc, nw, nh)
         imagined_state[np.where(imagined_state == 2.0)] = 1.0
-        if(np.array_equal(imagined_state, base_state)):
+        if(np.array_equal(imagined_state, base_state) and root.imagined_reward != END_REWARD):
             return True
         for child in root.children:
             found = search_node(child, base_state)
@@ -153,6 +153,7 @@ def search_node(root, base_state):
     return False
 
 def generate_tree(sess, state, reward=-1, count=0):
+    # TODO : Recursion count 1, allow END REWARD
     nc, nw, nh = ob_space
     num_actions = ac_space.n
     num_rewards = len(sokoban_rewards)
@@ -296,8 +297,8 @@ if __name__ == '__main__':
     node = generate_tree(sess, ob_np)
 
     #path = [2, 1, 3, 1, 3, 0, 1, 3]
-    path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
-    #path = [1, 3, 3, 1, 1]
+    #path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
+    path = [1, 3, 3, 1, 1]
     count = 0
     done = False
     while(done != True):
