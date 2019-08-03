@@ -20,7 +20,7 @@ N_ENVS = 16
 N_STEPS = 9
 END_REWARD = 49
 S_ALPHA = 2
-DEBUG = True
+DEBUG = False
 
 # Total number of iterations (taking into account number of environments and
 # number of steps). You wish to train for.
