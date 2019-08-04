@@ -205,7 +205,7 @@ def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=
                 print('Training done - Saving model')
                 actor_critic.save(SAVE_PATH, save_name + '_' + str(update) + '.ckpt')
                 with open("./logs_alpha.txt", "a+") as f:
-                    f.write("{%.1f} - {%.4f}\n".format(s_alpha, max(last_rews)))
+                    f.write("{:.1f} - {:.4f}\n".format(s_alpha, max(last_rews)))
                 break
             _ = last_rews.pop(0)
             last_rews.append(final_rewards.mean())
@@ -228,5 +228,5 @@ if __name__ == '__main__':
         raise ValueError('Must specify the algo name as either a2c or (something else in the future)')
 
     for s_alpha in S_ALPHAS:
-        train(policy, args.algo + "{%.1f}".format(s_alpha), s_alpha=s_alpha, summarize=True, log_path=args.algo + '_logs/'+ "{%.1f}".format(s_alpha))
+        train(policy, args.algo + "{:.1f}".format(s_alpha), s_alpha=s_alpha, summarize=True, log_path=args.algo + '_logs/'+ "{:.1f}".format(s_alpha))
 
