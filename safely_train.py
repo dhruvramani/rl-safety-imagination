@@ -4,6 +4,7 @@
 
 import copy
 import argparse
+import statistics 
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
@@ -19,8 +20,12 @@ ENV_NAME = "side_effects_sokoban"
 N_ENVS = 16
 N_STEPS = 9
 END_REWARD = 49
-S_ALPHA = 100
+S_ALPHAS =  [0.1, 0.3, 1, 3, 10, 30, 100, 300]
 DEBUG = False
+
+# For early stopping
+REW_HIST = 5 
+EARLY_STOP_THRESH = 2.0
 
 # Total number of iterations (taking into account number of environments and
 # number of steps). You wish to train for.
@@ -32,7 +37,7 @@ LOG_INTERVAL = 100
 SAVE_INTERVAL = 100
 
 # Where you want to save the weights
-SAVE_PATH = 'high_weights'
+SAVE_PATH = 'a2c_weights'
 
 def discount_with_dones(rewards, dones, GAMMA):
     discounted = []
@@ -66,7 +71,7 @@ def is_safe(trees, actions, base_state, dones):
     return penal, trees
 
 
-def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log_path = './logs'):
+def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=None, log_path = './logs'):
     envs = [make_env() for i in range(N_ENVS)]
     envs = SubprocVecEnv(envs)
 
@@ -110,6 +115,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
     print(base_state)
 
     base_tree = generate_tree(sess, state)
+    last_rews = [0] * REW_HIST
     for update in tqdm(range(load_count + 1, TOTAL_TIMESTEPS + 1)):
         # mb stands for mini batch
         trees = [copy.deepcopy(base_tree)] * N_ENVS
@@ -146,7 +152,7 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
 
             obs, rewards, dones, _ = envs.step(actions)
 
-            rewards = [rewards[i] - S_ALPHA * (1 - safe[i]) for i in range(len(rewards))]
+            rewards = [rewards[i] - s_alpha * (1 - safe[i]) for i in range(len(rewards))]
             episode_rewards += rewards
             masks = 1 - np.array(dones)
             final_rewards *= masks
@@ -195,6 +201,14 @@ def train(policy, save_name, load_count = 0, summarize=True, load_path=None, log
 
         if update % LOG_INTERVAL == 0 or update == 1:
             print('%i => Policy Loss : %.4f, Value Loss : %.4f, Policy Entropy : %.4f, Final Reward : %.4f' % (update, policy_loss, value_loss, policy_entropy, final_rewards.mean()))
+            if(update != 1 and abs(final_rewards.mean() - statistics.mean(last_rews)) < EARLY_STOP_THRESH):
+                print('Training done - Saving model')
+                actor_critic.save(SAVE_PATH, save_name + '_' + str(update) + '.ckpt')
+                with open("./logs_alpha.txt", "a+") as f:
+                    f.write("{} - {}\n".format(s_alpha, max(last_rews)))
+                break
+            _ = last_rews.pop(0)
+            last_rews.append(final_rewards.mean())
 
         if update % SAVE_INTERVAL == 0:
             print('Saving model')
@@ -213,5 +227,6 @@ if __name__ == '__main__':
     else:
         raise ValueError('Must specify the algo name as either a2c or (something else in the future)')
 
-    train(policy, args.algo, summarize=True, log_path=args.algo + '_high_logs')
+    for s_alpha in S_ALPHAS:
+        train(policy, args.algo + str(s_alpha), s_alpha=s_alpha, summarize=True, log_path=args.algo + str(s_alpha) + '_logs')
 
