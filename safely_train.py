@@ -228,5 +228,5 @@ if __name__ == '__main__':
         raise ValueError('Must specify the algo name as either a2c or (something else in the future)')
 
     for s_alpha in S_ALPHAS:
-        train(policy, args.algo + "{%.1f}".format(s_alpha), s_alpha=s_alpha, summarize=True, log_path=args.algo + str(s_alpha) + '_logs')
+        train(policy, args.algo + "{%.1f}".format(s_alpha), s_alpha=s_alpha, summarize=True, log_path=args.algo + '_logs/'+ "{%.1f}".format(s_alpha))
 
