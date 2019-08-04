@@ -20,7 +20,7 @@ ENV_NAME = "side_effects_sokoban"
 N_ENVS = 16
 N_STEPS = 9
 END_REWARD = 49
-S_ALPHAS =  [0.1, 0.3, 1, 3, 10, 30, 100, 300]
+S_ALPHAS =  [0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0]
 DEBUG = False
 
 # For early stopping
@@ -200,7 +200,7 @@ def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=
                     mb_rewards, mb_masks, mb_actions, mb_values, update)
 
         if update % LOG_INTERVAL == 0 or update == 1:
-            print('%i => Policy Loss : %.4f, Value Loss : %.4f, Policy Entropy : %.4f, Final Reward : %.4f' % (update, policy_loss, value_loss, policy_entropy, final_rewards.mean()))
+            print('%i - %f => Policy Loss : %.4f, Value Loss : %.4f, Policy Entropy : %.4f, Final Reward : %.4f' % (update, s_alpha, policy_loss, value_loss, policy_entropy, final_rewards.mean()))
             if(update != 1 and abs(final_rewards.mean() - statistics.mean(last_rews)) < EARLY_STOP_THRESH):
                 print('Training done - Saving model')
                 actor_critic.save(SAVE_PATH, save_name + '_' + str(update) + '.ckpt')
