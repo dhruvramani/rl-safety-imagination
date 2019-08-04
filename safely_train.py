@@ -200,12 +200,12 @@ def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=
                     mb_rewards, mb_masks, mb_actions, mb_values, update)
 
         if update % LOG_INTERVAL == 0 or update == 1:
-            print('%i - %f => Policy Loss : %.4f, Value Loss : %.4f, Policy Entropy : %.4f, Final Reward : %.4f' % (update, s_alpha, policy_loss, value_loss, policy_entropy, final_rewards.mean()))
+            print('%i - %.1f => Policy Loss : %.4f, Value Loss : %.4f, Policy Entropy : %.4f, Final Reward : %.4f' % (update, s_alpha, policy_loss, value_loss, policy_entropy, final_rewards.mean()))
             if(update != 1 and abs(final_rewards.mean() - statistics.mean(last_rews)) < EARLY_STOP_THRESH):
                 print('Training done - Saving model')
                 actor_critic.save(SAVE_PATH, save_name + '_' + str(update) + '.ckpt')
                 with open("./logs_alpha.txt", "a+") as f:
-                    f.write("{} - {}\n".format(s_alpha, max(last_rews)))
+                    f.write("{%.1f} - {%.4f}\n".format(s_alpha, max(last_rews)))
                 break
             _ = last_rews.pop(0)
             last_rews.append(final_rewards.mean())
@@ -228,5 +228,5 @@ if __name__ == '__main__':
         raise ValueError('Must specify the algo name as either a2c or (something else in the future)')
 
     for s_alpha in S_ALPHAS:
-        train(policy, args.algo + str(s_alpha), s_alpha=s_alpha, summarize=True, log_path=args.algo + str(s_alpha) + '_logs')
+        train(policy, args.algo + "{%.1f}".format(s_alpha), s_alpha=s_alpha, summarize=True, log_path=args.algo + str(s_alpha) + '_logs')
 
