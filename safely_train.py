@@ -19,7 +19,7 @@ ENV_NAME = "side_effects_sokoban"
 N_ENVS = 16
 N_STEPS = 9
 END_REWARD = 49
-S_ALPHA = 2
+S_ALPHA = 100
 DEBUG = False
 
 # Total number of iterations (taking into account number of environments and
@@ -32,7 +32,7 @@ LOG_INTERVAL = 100
 SAVE_INTERVAL = 100
 
 # Where you want to save the weights
-SAVE_PATH = 'weights'
+SAVE_PATH = 'high_weights'
 
 def discount_with_dones(rewards, dones, GAMMA):
     discounted = []
@@ -213,5 +213,5 @@ if __name__ == '__main__':
     else:
         raise ValueError('Must specify the algo name as either a2c or (something else in the future)')
 
-    train(policy, args.algo, summarize=True, log_path=args.algo + '_logs')
+    train(policy, args.algo, summarize=True, log_path=args.algo + '_high_logs')
 
