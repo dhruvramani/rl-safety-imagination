@@ -21,12 +21,12 @@ N_ENVS = 16
 N_STEPS = 9
 END_REWARD = 49
 S_ALPHAS =  [0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0]
-s_alpha = S_ALPHAS[1]
+s_alpha = S_ALPHAS[2]
 DEBUG = False
 
 # For early stopping
-REW_HIST = 8 
-EARLY_STOP_THRESH = 2.0
+REW_HIST = 3 
+EARLY_STOP_THRESH = 1.5
 
 # Total number of iterations (taking into account number of environments and
 # number of steps). You wish to train for.
