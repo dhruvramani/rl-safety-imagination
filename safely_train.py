@@ -21,10 +21,11 @@ N_ENVS = 16
 N_STEPS = 9
 END_REWARD = 49
 S_ALPHAS =  [0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0]
+s_alpha = S_ALPHAS[0]
 DEBUG = False
 
 # For early stopping
-REW_HIST = 5 
+REW_HIST = 8 
 EARLY_STOP_THRESH = 2.0
 
 # Total number of iterations (taking into account number of environments and
@@ -87,7 +88,6 @@ def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
-
     actor_critic = get_actor_critic(sess, N_ENVS, N_STEPS, ob_space,
             ac_space, policy, summarize)
     if load_path is not None:
@@ -96,7 +96,6 @@ def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=
 
     summary_op = tf.summary.merge_all()
     writer = tf.summary.FileWriter(log_path, graph=sess.graph)
-
     sess.run(tf.global_variables_initializer())
 
     batch_ob_shape = (N_ENVS * N_STEPS, nw, nh, nc)
@@ -216,7 +215,6 @@ def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=
 
         actor_critic.save(SAVE_PATH, save_name + '_done.ckpt')
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--algo', help='Algorithm to train a2c (or something else in the future)')
@@ -227,6 +225,6 @@ if __name__ == '__main__':
     else:
         raise ValueError('Must specify the algo name as either a2c or (something else in the future)')
 
-    for s_alpha in S_ALPHAS:
-        train(policy, args.algo + "{:.1f}".format(s_alpha), s_alpha=s_alpha, summarize=True, log_path=args.algo + '_logs/'+ "{:.1f}".format(s_alpha))
-
+    #for s_alpha in S_ALPHAS:
+        #tf.reset_default_graph()
+    train(policy, args.algo + "{:.1f}".format(s_alpha), s_alpha=s_alpha, summarize=True, log_path=args.algo + '_logs/'+ "{:.1f}".format(s_alpha))

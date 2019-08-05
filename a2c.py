@@ -19,7 +19,7 @@ def cat_entropy(logits):
 
 # Basic baseline policy
 class CnnPolicy(object):
-    def __init__(self, sess, ob_space, ac_space, nbatch, nsteps, reuse=False):
+    def __init__(self, sess, ob_space, ac_space, nbatch, nsteps, reuse=True):
         nc, nw, nh = ob_space
 
         nact = ac_space.n
