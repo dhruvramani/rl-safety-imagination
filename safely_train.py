@@ -21,7 +21,7 @@ N_ENVS = 16
 N_STEPS = 9
 END_REWARD = 49
 S_ALPHAS =  [0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0]
-s_alpha = S_ALPHAS[0]
+s_alpha = S_ALPHAS[1]
 DEBUG = False
 
 # For early stopping
@@ -38,7 +38,7 @@ LOG_INTERVAL = 100
 SAVE_INTERVAL = 100
 
 # Where you want to save the weights
-SAVE_PATH = 'a2c_weights'
+SAVE_PATH = 'a2c_weights/{:.1f}'.format(s_alpha)
 
 def discount_with_dones(rewards, dones, GAMMA):
     discounted = []
