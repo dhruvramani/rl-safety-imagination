@@ -23,7 +23,7 @@ END_REWARD = 49
 MAX_TREE_STEPS = 10
 NUM_ROLLOUTS = 10 # Hyperparameter of how far ahead in the future the agent "imagines"
  
-A2C_MODEL_PATH = 'weights/a2c_4200.ckpt'
+A2C_MODEL_PATH = 'weights/a2c_3600.ckpt'
 ENV_MODEL_PATH = 'weights/env_model.ckpt'
 
 np.set_printoptions(threshold=sys.maxsize)
@@ -182,10 +182,20 @@ def generate_tree(sess, state, reward=-1, count=0):
 
 def safe_action(agent, tree, base_state, unsafe_action):
     possible_actions = [i for i in range(ac_space.n) if i != unsafe_action]
-    imagined_states =  {a : tree.children[a].imagined_state for a in possible_actions if search_node(tree.children[a], base_state) == True or (tree.children[a] is not None and tree.children[a].imagined_reward == END_REWARD)}
+    imagined_states =  {a : tree.children[a].imagined_state for a in possible_actions if search_node(tree.children[a], base_state) == True}
     values = {a : agent.critique(imagined_states[a].reshape(1, nw, nh, nc)) for a in imagined_states.keys()}
+    for a in possible_actions:
+        if(tree.children[a] is not None and tree.children[a].imagined_reward == END_REWARD):
+            values[a] = END_REWARD
     max_a = max(values.keys(), key=lambda a:values[a])
     return [max_a]
+
+def next_node(root, state):
+    current_node = copy.deepcopy(root)
+    queue, found = [], False
+    queue.append(current_node)
+    while found == False and len(queue) != 0:
+        curr_state = copy.deepcopy()
 
 # NOTE : Uncomment after getting proper A2C weights
 def act_safely(sess):
@@ -286,12 +296,12 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    act_safely(sess)
+    #act_safely(sess)
     #plot_predictions(sess)
     
-    
+    '''    
     # TREEEEEE lol
-    '''
+    
     state = envs.reset()
     base_state = np.copy(state)
     base_state = base_state.reshape(nc, nw, nh)
