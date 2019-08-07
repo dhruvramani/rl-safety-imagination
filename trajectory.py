@@ -22,6 +22,7 @@ N_STEPS = 5
 END_REWARD = 49
 MAX_TREE_STEPS = 10
 NUM_ROLLOUTS = 10 # Hyperparameter of how far ahead in the future the agent "imagines"
+DEBUG = False
  
 A2C_MODEL_PATH = 'weights/a2c_3600.ckpt'
 ENV_MODEL_PATH = 'weights/env_model.ckpt'
@@ -190,12 +191,24 @@ def safe_action(agent, tree, base_state, unsafe_action):
     max_a = max(values.keys(), key=lambda a:values[a])
     return [max_a]
 
-def next_node(root, state):
+def get_node(root, state):
+    state = state.reshape(nc, nw, nh)
     current_node = copy.deepcopy(root)
-    queue, found = [], False
+    queue = []
     queue.append(current_node)
-    while found == False and len(queue) != 0:
-        curr_state = copy.deepcopy()
+    while len(queue) != 0:
+        current_node = queue.pop(0)
+        curr_state = copy.deepcopy(current_node.imagined_state)
+        curr_state = curr_state.reshape(nc, nw, nh)
+
+        if(np.array_equal(curr_state, state)):
+            return current_node
+
+        for child in current_node.children:
+            if(child is not None):
+                queue.append(child)
+
+    return None
 
 # NOTE : Uncomment after getting proper A2C weights
 def act_safely(sess):
@@ -210,7 +223,8 @@ def act_safely(sess):
     base_state[np.where(base_state == 2.0)] = 1.0
     print(base_state)
 
-    tree = generate_tree(sess, state)
+    root = generate_tree(sess, state)
+    tree = copy.deepcopy(root)
     print("Tree Created")
     done, steps = False, 0
     
@@ -222,15 +236,19 @@ def act_safely(sess):
             is_end = next_node.imagined_reward == END_REWARD
         except AttributeError:
             next_node = None 
-        print("-- Current State --")
-        print(state)
+        if(DEBUG):
+            print("-- Current State --")
+            print(state)
         if(is_end == False and search_node(next_node, base_state) == False):
-            print("Unsafe - Old Action : ", CONTROLS[actions[0]], end="")
+            old_action = CONTROLS[actions[0]]
             actions = safe_action(actor_critic, tree, base_state, actions[0])
-            print("- New Action : ", CONTROLS[actions[0]])
+            if(DEBUG):
+                print("Unsafe - Old Action : ", old_action, end="")
+                print("- New Action : ", CONTROLS[actions[0]])
         state, reward, done, _ = env.step(actions[0])
-        #env.render()
-        tree = tree.children[actions[0]]
+        if(not DEBUG):
+            env.render()
+        tree = get_node(root, state) #tree.children[actions[0]]
         steps += 1
 '''
 def plot_predictions(sess):
@@ -296,7 +314,7 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    #act_safely(sess)
+    act_safely(sess)
     #plot_predictions(sess)
     
     '''    
