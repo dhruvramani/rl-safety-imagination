@@ -20,10 +20,10 @@ from discretize_env import pix_to_target, target_to_pix, rewards_to_target, _NUM
 N_ENVS = 1
 N_STEPS = 5
 END_REWARD = 49
-MAX_TREE_STEPS = 9
+MAX_TREE_STEPS = 10
 NUM_ROLLOUTS = 10 # Hyperparameter of how far ahead in the future the agent "imagines"
  
-A2C_MODEL_PATH = 'weights/a2c_5100.ckpt'
+A2C_MODEL_PATH = 'weights/a2c_4200.ckpt'
 ENV_MODEL_PATH = 'weights/env_model.ckpt'
 
 np.set_printoptions(threshold=sys.maxsize)
@@ -182,11 +182,11 @@ def generate_tree(sess, state, reward=-1, count=0):
 
 def safe_action(agent, tree, base_state, unsafe_action):
     possible_actions = [i for i in range(ac_space.n) if i != unsafe_action]
-    imagined_states =  {a : tree.children[a].imagined_state for a in possible_actions if tree.children[a] is not None} # if search_node(tree.children[a], base_state) == True}
+    imagined_states =  {a : tree.children[a].imagined_state for a in possible_actions if search_node(tree.children[a], base_state) == True or (tree.children[a] is not None and tree.children[a].imagined_reward == END_REWARD)}
     values = {a : agent.critique(imagined_states[a].reshape(1, nw, nh, nc)) for a in imagined_states.keys()}
     max_a = max(values.keys(), key=lambda a:values[a])
     return [max_a]
-'''
+
 # NOTE : Uncomment after getting proper A2C weights
 def act_safely(sess):
     env = GridworldEnv("side_effects_sokoban")
@@ -195,7 +195,7 @@ def act_safely(sess):
 
     actor_critic = get_cache_loaded_a2c(sess, N_ENVS, N_STEPS, ob_space, ac_space)
     state = env.reset()
-    base_state = np.copy(state)
+    base_state = copy.deepcopy(state)
     base_state = base_state.reshape(nc, nw, nh)
     base_state[np.where(base_state == 2.0)] = 1.0
     print(base_state)
@@ -206,10 +206,15 @@ def act_safely(sess):
     
     while(done != True):
         actions, _, _ = actor_critic.act(np.expand_dims(state, axis=3))
-        next_node = tree.children[actions[0]]
+        is_end = False
+        try :
+            next_node = tree.children[actions[0]]
+            is_end = next_node.imagined_reward == END_REWARD
+        except AttributeError:
+            next_node = None 
         print("-- Current State --")
         print(state)
-        if(search_node(next_node, base_state) == False):
+        if(is_end == False and search_node(next_node, base_state) == False):
             print("Unsafe - Old Action : ", CONTROLS[actions[0]], end="")
             actions = safe_action(actor_critic, tree, base_state, actions[0])
             print("- New Action : ", CONTROLS[actions[0]])
@@ -217,7 +222,7 @@ def act_safely(sess):
         #env.render()
         tree = tree.children[actions[0]]
         steps += 1
-
+'''
 def plot_predictions(sess):
     env = GridworldEnv("side_effects_sokoban")
     num_actions = ac_space.n
@@ -281,12 +286,12 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    #act_safely(sess)
+    act_safely(sess)
     #plot_predictions(sess)
     
     
     # TREEEEEE lol
-    
+    '''
     state = envs.reset()
     base_state = np.copy(state)
     base_state = base_state.reshape(nc, nw, nh)
@@ -312,7 +317,7 @@ if __name__ == '__main__':
         #env.render("human", imagined_state, node.imagined_reward)
         node = node.children[path[count]]
         count += 1
-    
+    '''
     '''
     # NOT-SO-TREEEEE lolol
     imagined_states, imagined_rewards = generate_trajectory(sess, ob_np)

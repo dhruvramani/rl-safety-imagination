@@ -20,11 +20,12 @@ ENV_NAME = "side_effects_sokoban"
 N_ENVS = 16
 N_STEPS = 9
 END_REWARD = 49
-S_ALPHAS =  [0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0]
-s_alpha = S_ALPHAS[2]
+S_ALPHAS =  [0.1, 0.3, 1.0, 2.0, 3.0, 10.0, 30.0, 100.0, 300.0]
+s_alpha = 2.0 #S_ALPHAS[4]
 DEBUG = False
 
 # For early stopping
+EARLY_STOPPING = False
 REW_HIST = 3 
 EARLY_STOP_THRESH = 1.5
 
@@ -38,7 +39,7 @@ LOG_INTERVAL = 100
 SAVE_INTERVAL = 100
 
 # Where you want to save the weights
-SAVE_PATH = 'a2c_weights/{:.1f}'.format(s_alpha)
+SAVE_PATH = 'safe_a2c_weights/{:.1f}'.format(s_alpha)
 
 def discount_with_dones(rewards, dones, GAMMA):
     discounted = []
@@ -200,7 +201,7 @@ def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=
 
         if update % LOG_INTERVAL == 0 or update == 1:
             print('%i - %.1f => Policy Loss : %.4f, Value Loss : %.4f, Policy Entropy : %.4f, Final Reward : %.4f' % (update, s_alpha, policy_loss, value_loss, policy_entropy, final_rewards.mean()))
-            if(update != 1 and abs(final_rewards.mean() - statistics.mean(last_rews)) < EARLY_STOP_THRESH):
+            if(EARLY_STOPPING and update != 1 and abs(final_rewards.mean() - statistics.mean(last_rews)) < EARLY_STOP_THRESH):
                 print('Training done - Saving model')
                 actor_critic.save(SAVE_PATH, save_name + '_' + str(update) + '.ckpt')
                 with open("./logs_alpha.txt", "a+") as f:
@@ -227,4 +228,4 @@ if __name__ == '__main__':
 
     #for s_alpha in S_ALPHAS:
         #tf.reset_default_graph()
-    train(policy, args.algo + "{:.1f}".format(s_alpha), s_alpha=s_alpha, summarize=True, log_path=args.algo + '_logs/'+ "{:.1f}".format(s_alpha))
+    train(policy, args.algo + "{:.1f}".format(s_alpha), s_alpha=s_alpha, summarize=True, log_path="safe_" + args.algo + '_logs/'+ "{:.1f}".format(s_alpha))
