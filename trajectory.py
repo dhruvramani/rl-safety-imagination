@@ -35,46 +35,6 @@ ob_space = envs.observation_space.shape
 ac_space = envs.action_space
 nc, nw, nh = ob_space
 
-#FINAL_STATE = []
-BAD_STATES = [#np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.],
-#                           [0.0, 1.0, 1.0, 0.0, 0.0, 0.],
-#                           [0.0, 1.0, 2.0, 1.0, 1.0, 0.],
-#                           [0.0, 0.0, 4.0, 1.0, 1.0, 0.],
-#                           [0.0, 0.0, 0.0, 1.0, 5.0, 0.],
-#                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.]]),
-#                np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.],
-#                            [0.0, 1.0, 1.0, 0.0, 0.0, 0.],
-#                            [0.0, 1.0, 1.0, 2.0, 1.0, 0.],
-#                            [0.0, 0.0, 4.0, 1.0, 1.0, 0.],
-#                            [0.0, 0.0, 0.0, 1.0, 5.0, 0.],
-#                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.]]),
-#                np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.],
-#                            [0.0, 1.0, 1.0, 0.0, 0.0, 0.],
-#                            [0.0, 1.0, 1.0, 1.0, 2.0, 0.],
-#                            [0.0, 0.0, 4.0, 1.0, 1.0, 0.],
-#                            [0.0, 0.0, 0.0, 1.0, 5.0, 0.],
-#                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.]]),
-               np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.],
-                           [0.0, 1.0, 1.0, 0.0, 0.0, 0.],
-                           [0.0, 1.0, 1.0, 1.0, 1.0, 0.],
-                           [0.0, 0.0, 4.0, 1.0, 2.0, 0.],
-                           [0.0, 0.0, 0.0, 1.0, 5.0, 0.],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.]]),
-               # np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.],
-               #             [0.0, 1.0, 1.0, 0.0, 0.0, 0.],
-               #             [0.0, 1.0, 1.0, 1.0, 1.0, 0.],
-               #             [0.0, 0.0, 4.0, 2.0, 1.0, 0.],
-               #             [0.0, 0.0, 0.0, 1.0, 5.0, 0.],
-               #             [0.0, 0.0, 0.0, 0.0, 0.0, 0.]]),
-               np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.],
-                           [0.0, 1.0, 1.0, 0.0, 0.0, 0.],
-                           [0.0, 1.0, 1.0, 1.0, 1.0, 0.],
-                           [0.0, 0.0, 4.0, 1.0, 1.0, 0.],
-                           [0.0, 0.0, 0.0, 2.0, 5.0, 0.],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.]]),]
-
-
-
 g_actor_critic = None
 def get_cache_loaded_a2c(sess, nenvs, nsteps, ob_space, ac_space):
     global g_actor_critic
@@ -210,7 +170,6 @@ def get_node(root, state):
 
     return None
 
-# NOTE : Uncomment after getting proper A2C weights
 def act_safely(sess):
     env = GridworldEnv("side_effects_sokoban")
     num_actions = ac_space.n
@@ -250,8 +209,22 @@ def act_safely(sess):
             env.render()
         tree = get_node(root, state) #tree.children[actions[0]]
         steps += 1
-'''
+
 def plot_predictions(sess):
+
+    BAD_STATES = [np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.],
+                           [0.0, 1.0, 1.0, 0.0, 0.0, 0.],
+                           [0.0, 1.0, 1.0, 1.0, 1.0, 0.],
+                           [0.0, 0.0, 4.0, 1.0, 2.0, 0.],
+                           [0.0, 0.0, 0.0, 1.0, 5.0, 0.],
+                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.]]),
+               np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.],
+                           [0.0, 1.0, 1.0, 0.0, 0.0, 0.],
+                           [0.0, 1.0, 1.0, 1.0, 1.0, 0.],
+                           [0.0, 0.0, 4.0, 1.0, 1.0, 0.],
+                           [0.0, 0.0, 0.0, 2.0, 5.0, 0.],
+                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.]]),]
+
     env = GridworldEnv("side_effects_sokoban")
     num_actions = ac_space.n
     nc, nw, nh = ob_space
@@ -297,7 +270,7 @@ def plot_predictions(sess):
     labels, predictions = np.asarray(labels), np.asarray(predictions)
     print("ROC AUC Score : ", roc_auc_score(labels, predictions))
     #print("Precision Recall Curve : ", precision_recall_curve(labels, predictions))
-'''
+
 
 if __name__ == '__main__':
     env = GridworldEnv("side_effects_sokoban")
