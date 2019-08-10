@@ -20,7 +20,7 @@ from discretize_env import pix_to_target, target_to_pix, rewards_to_target, _NUM
 N_ENVS = 1
 N_STEPS = 5
 END_REWARD = 49
-MAX_TREE_STEPS = 10
+MAX_TREE_STEPS = 7
 NUM_ROLLOUTS = 10 # Hyperparameter of how far ahead in the future the agent "imagines"
 DEBUG = False
  
