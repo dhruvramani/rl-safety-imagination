@@ -7,7 +7,7 @@ from utils import SubprocVecEnv
 import numpy as np
 
 from tqdm import tqdm
-from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoban_rewards
+from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, conveyer_rewards
 
 # How many iterations we are training the environment model for.
 ENV_NAME = "conveyor_belt"
@@ -186,7 +186,7 @@ if __name__ == '__main__':
 
         with tf.variable_scope('env_model'):
             env_model = create_env_model(ob_space, num_actions, _NUM_PIXELS,
-                    len(sokoban_rewards))
+                    len(conveyer_rewards))
 
         sess.run(tf.global_variables_initializer())
 

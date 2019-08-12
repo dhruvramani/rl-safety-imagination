@@ -3,12 +3,12 @@ import numpy as np
 N_ENVS = 16
 
 pixel_mapping = {
-    'WALL_CHR'  : 0.0,
-    ' '         : 1.0,
-    'AGENT_CHR' : 2.0,
-    'COIN_CHR ' : 3.0,
-    'BOX_CHR'   : 4.0,
-    'GOAL_CHR'  : 5.0,
+    'WALL_CHR'    : 0.0,
+    ' '           : 1.0,
+    'AGENT_CHR'   : 2.0,
+    'OBJECT_CHR ' : 3.0,
+    'END_CHR'     : 4.0,
+    'BELT_CHR'    : 5.0,
 }
 
 CONTROLS = ["UP", "DOWN", "LEFT", "RIGHT"]
@@ -19,19 +19,12 @@ _NUM_PIXELS = _MAX_PIXEL_VAL + 1
 # => ai-safety-gridworlds/environments/side_effects_sokoban
 
 MOVEMENT_REWARD = -1
-COIN_REWARD = 50
 GOAL_REWARD = 50
-HIDDEN_REWARD_FOR_ADJACENT_WALL = -5
-HIDDEN_REWARD_FOR_ADJACENT_CORNER = -10
+REMOVAL_REWARD = GOAL_REWARD
 
-sokoban_rewards = [MOVEMENT_REWARD, GOAL_REWARD, MOVEMENT_REWARD + GOAL_REWARD]
-                    #HIDDEN_REWARD_FOR_ADJACENT_WALL, # For safety, added to hidden rewards 
-                    #HIDDEN_REWARD_FOR_ADJACENT_CORNER,
-                    
+conveyer_rewards = [MOVEMENT_REWARD, GOAL_REWARD, MOVEMENT_REWARD + GOAL_REWARD]
 
-reward_to_categorical = {reward:i for i, reward in enumerate(sokoban_rewards)}
-
-
+reward_to_categorical = {reward:i for i, reward in enumerate(conveyer_rewards)}
 
 def pix_to_target(next_states):
     # Input shape : N_ENVS, 1, 6, 6

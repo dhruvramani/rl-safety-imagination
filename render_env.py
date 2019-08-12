@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 from env_model import make_env, create_env_model
 from utils import SubprocVecEnv
-from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoban_rewards
+from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, conveyer_rewards
 from a2c import get_actor_critic, CnnPolicy
 from imagine import convert_target_to_real
 from safe_grid_gym.envs.gridworlds_env import GridworldEnv
@@ -37,7 +37,7 @@ with tf.Session() as sess:
     
     with tf.variable_scope('env_model'): 
         env_model = create_env_model(ob_space, num_actions,_NUM_PIXELS,
-                    len(sokoban_rewards), should_summary=False)
+                    len(conveyer_rewards), should_summary=False)
 
     save_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='env_model')
     loader = tf.train.Saver(var_list=save_vars)
@@ -67,7 +67,7 @@ with tf.Session() as sess:
         # NOTE : render screws up if reward isnt proper
         '''
         env.render("human", states[0, :, :], reward)
-        #env.render("human", s[0, 0, :, :], sokoban_rewards[r[0]])
+        #env.render("human", s[0, 0, :, :], conveyer_rewards[r[0]])
         time.sleep(0.2)
         '''
 env.close()

@@ -14,7 +14,7 @@ from imagine import ImaginationCore
 from a2c import get_actor_critic, CnnPolicy
 from env_model import make_env, create_env_model
 from safe_grid_gym.envs.gridworlds_env import GridworldEnv
-from discretize_env import pix_to_target, target_to_pix, rewards_to_target, _NUM_PIXELS, CONTROLS, sokoban_rewards
+from discretize_env import pix_to_target, target_to_pix, rewards_to_target, _NUM_PIXELS, CONTROLS, conveyer_rewards
 
 # TODO - REMOVE ACTOR CRITIC WHERE NOT REQUIRED
 N_ENVS = 1
@@ -54,7 +54,7 @@ def get_cache_loaded_env_model(sess, ob_space, num_actions):
     if g_env_model is None:
         with tf.variable_scope('env_model'):
             g_env_model = create_env_model(ob_space, num_actions, _NUM_PIXELS,
-                    len(sokoban_rewards), should_summary=False)
+                    len(conveyer_rewards), should_summary=False)
 
         save_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='env_model')
         loader = tf.train.Saver(var_list=save_vars)
@@ -67,7 +67,7 @@ def get_cache_loaded_env_model(sess, ob_space, num_actions):
 '''
 def generate_trajectory(sess, state):
     num_actions = ac_space.n
-    num_rewards = len(sokoban_rewards)
+    num_rewards = len(conveyer_rewards)
 
     actor_critic = get_cache_loaded_a2c(sess, N_ENVS, N_STEPS, ob_space, ac_space)
     env_model = get_cache_loaded_env_model(sess, ob_space, num_actions)
@@ -83,8 +83,8 @@ def generate_trajectory(sess, state):
 
         #for i in range(imagined_states.shape[0]):
         imagined_states_list.append(imagined_state[0, 0, :, :])
-        imagined_rewards_list.append(sokoban_rewards[imagined_reward[0]])
-        if(sokoban_rewards[imagined_reward[0]] == END_REWARD):
+        imagined_rewards_list.append(conveyer_rewards[imagined_reward[0]])
+        if(conveyer_rewards[imagined_reward[0]] == END_REWARD):
             break
 
     return imagined_states_list, imagined_rewards_list
@@ -117,7 +117,7 @@ def generate_tree(sess, state, reward=-1, count=0):
     # TODO : Recursion count 1, allow END REWARD
     nc, nw, nh = ob_space
     num_actions = ac_space.n
-    num_rewards = len(sokoban_rewards)
+    num_rewards = len(conveyer_rewards)
 
     env_model = get_cache_loaded_env_model(sess, ob_space, num_actions)
 
@@ -132,7 +132,7 @@ def generate_tree(sess, state, reward=-1, count=0):
 
     for action in range(num_actions):
         imagined_states, imagined_rewards = imagination.imagine(state, sess, action)
-        imagined_state, imagined_reward = imagined_states[0][0, 0, :, :], sokoban_rewards[np.argmax(imagined_rewards[0], axis=1)[0]]
+        imagined_state, imagined_reward = imagined_states[0][0, 0, :, :], conveyer_rewards[np.argmax(imagined_rewards[0], axis=1)[0]]
         if(np.array_equal(state.reshape(nw, nh), imagined_state)):
             node.add_child(None)
             continue
@@ -173,7 +173,7 @@ def get_node(root, state):
 def act_safely(sess):
     env = GridworldEnv("side_effects_sokoban")
     num_actions = ac_space.n
-    num_rewards = len(sokoban_rewards)
+    num_rewards = len(conveyer_rewards)
 
     actor_critic = get_cache_loaded_a2c(sess, N_ENVS, N_STEPS, ob_space, ac_space)
     state = env.reset()
@@ -228,7 +228,7 @@ def plot_predictions(sess):
     env = GridworldEnv("side_effects_sokoban")
     num_actions = ac_space.n
     nc, nw, nh = ob_space
-    num_rewards = len(sokoban_rewards)
+    num_rewards = len(conveyer_rewards)
 
     actor_critic = get_cache_loaded_a2c(sess, N_ENVS, N_STEPS, ob_space, ac_space)
 

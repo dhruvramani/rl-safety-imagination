@@ -11,7 +11,7 @@ from utils import SubprocVecEnv
 from a2c import get_actor_critic, CnnPolicy
 from env_model import make_env, create_env_model
 from safe_grid_gym.envs.gridworlds_env import GridworldEnv
-from discretize_env import pix_to_target, target_to_pix, rewards_to_target, _NUM_PIXELS, sokoban_rewards
+from discretize_env import pix_to_target, target_to_pix, rewards_to_target, _NUM_PIXELS, conveyer_rewards
 
 np.set_printoptions(threshold=sys.maxsize)
 
