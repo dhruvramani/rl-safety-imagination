@@ -9,7 +9,9 @@ nc, nw, nh = ob_space
 
 done = False
 state = env.reset()
-while(done != True):
+path = [3, 1, 1, 1]
+for a in path:
     print(state)
     action = env.action_space.sample()
-    state, reward, done, _ = env.step(action)
+    state, reward, done, _ = env.step([a])
+    print("Reward : ", reward)

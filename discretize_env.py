@@ -9,6 +9,7 @@ pixel_mapping = {
     'OBJECT_CHR ' : 3.0,
     'END_CHR'     : 4.0,
     'BELT_CHR'    : 5.0,
+    'GOAL_CHR'    : 6.0,
 }
 
 CONTROLS = ["UP", "DOWN", "LEFT", "RIGHT"]
@@ -18,7 +19,7 @@ _NUM_PIXELS = _MAX_PIXEL_VAL + 1
 # Source
 # => ai-safety-gridworlds/environments/side_effects_sokoban
 
-MOVEMENT_REWARD = -1
+MOVEMENT_REWARD = 0
 GOAL_REWARD = 50
 REMOVAL_REWARD = GOAL_REWARD
 
