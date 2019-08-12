@@ -19,7 +19,7 @@ ob_space = envs.observation_space.shape
 ac_space = envs.action_space
 num_actions = envs.action_space.n
 
-env = GridworldEnv("side_effects_sokoban")
+env = GridworldEnv("conveyor_belt")
 
 done = False
 states = env.reset()

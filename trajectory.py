@@ -273,7 +273,7 @@ def plot_predictions(sess):
 
 
 if __name__ == '__main__':
-    env = GridworldEnv("side_effects_sokoban")
+    env = GridworldEnv("conveyor_belt")
     env.reset()
 
     nc, nw, nh = ob_space
@@ -287,10 +287,10 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    act_safely(sess)
+    #act_safely(sess)
     #plot_predictions(sess)
     
-    '''    
+       
     # TREEEEEE lol
     
     state = envs.reset()
@@ -302,9 +302,7 @@ if __name__ == '__main__':
     print("=> Generating Tree")
     node = generate_tree(sess, ob_np)
 
-    #path = [2, 1, 3, 1, 3, 0, 1, 3]
-    path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
-    #path = [1, 3, 3, 1, 1]
+
     count = 0
     done = False
     while(done != True):

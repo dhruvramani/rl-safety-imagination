@@ -10,7 +10,7 @@ from tqdm import tqdm
 from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, sokoban_rewards
 
 # How many iterations we are training the environment model for.
-ENV_NAME = "side_effects_sokoban"
+ENV_NAME = "conveyor_belt"
 NUM_UPDATES = 50000
 LOG_INTERVAL = 100
 N_ENVS = 1
@@ -151,13 +151,13 @@ def play_games(envs, frames):
         
         if(True in dones):
             #if int(frame_idx % 20) == 0: 
-            states = envs.reset()
-            rare_path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
-            for action in rare_path:
-                states = states.reshape(-1, nw, nh, nc)
-                next_states, rewards, dones, _ = envs.step([action] * N_ENVS)
-                yield frame_idx, states, action, rewards, next_states, dones
-                states = next_states
+            #states = envs.reset()
+            #rare_path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
+            #for action in rare_path:
+            #    states = states.reshape(-1, nw, nh, nc)
+            #    next_states, rewards, dones, _ = envs.step([action] * N_ENVS)
+            #    yield frame_idx, states, action, rewards, next_states, dones
+            #    states = next_states
             states = envs.reset()
         else:
             states = next_states
