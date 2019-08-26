@@ -11,9 +11,9 @@ from discretize_env import pix_to_target, rewards_to_target, _NUM_PIXELS, convey
 
 # How many iterations we are training the environment model for.
 ENV_NAME = "conveyor_belt"
-NUM_UPDATES = 50000
+NUM_UPDATES = 100000
 LOG_INTERVAL = 100
-N_ENVS = 1
+N_ENVS = 16
 N_STEPS = 5
 N_ACTIONS = 4
 
@@ -150,14 +150,14 @@ def play_games(envs, frames):
         yield frame_idx, states, actions, rewards, next_states, dones
         
         if(True in dones):
-            #if int(frame_idx % 20) == 0: 
-            #states = envs.reset()
-            #rare_path = [2, 1, 3, 1, 3, 3, 0, 2, 1, 3, 1]
-            #for action in rare_path:
-            #    states = states.reshape(-1, nw, nh, nc)
-            #    next_states, rewards, dones, _ = envs.step([action] * N_ENVS)
-            #    yield frame_idx, states, action, rewards, next_states, dones
-            #    states = next_states
+            if int(frame_idx % 1) == 0: 
+                states = envs.reset()
+                rare_path =  [1, 1, 2, 1, 1, 3, 0, envs.action_space.sample(), envs.action_space.sample(), envs.action_space.sample()]
+                for action in rare_path:
+                    states = states.reshape(-1, nw, nh, nc)
+                    next_states, rewards, dones, _ = envs.step([action] * N_ENVS)
+                    yield frame_idx, states, action, rewards, next_states, dones
+                    states = next_states
             states = envs.reset()
         else:
             states = next_states

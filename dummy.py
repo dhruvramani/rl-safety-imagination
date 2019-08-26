@@ -9,7 +9,7 @@ nc, nw, nh = ob_space
 
 done = False
 state = env.reset()
-path = [3, 1, 1, 1]
+path = [1, 1, 2, 1, 1, 3, 0, 0, 0]
 for a in path:
     print(state)
     action = env.action_space.sample()

@@ -20,7 +20,7 @@ from discretize_env import pix_to_target, target_to_pix, rewards_to_target, _NUM
 N_ENVS = 1
 N_STEPS = 5
 END_REWARD = 49
-MAX_TREE_STEPS = 10
+MAX_TREE_STEPS = 9
 NUM_ROLLOUTS = 10 # Hyperparameter of how far ahead in the future the agent "imagines"
 DEBUG = False
  
@@ -33,6 +33,8 @@ envs = [make_env() for i in range(N_ENVS)]
 envs = SubprocVecEnv(envs)
 ob_space = envs.observation_space.shape
 ac_space = envs.action_space
+num_actions = ac_space.n
+num_rewards = len(conveyer_rewards)
 nc, nw, nh = ob_space
 
 g_actor_critic = None
@@ -66,8 +68,6 @@ def get_cache_loaded_env_model(sess, ob_space, num_actions):
 
 '''
 def generate_trajectory(sess, state):
-    num_actions = ac_space.n
-    num_rewards = len(conveyer_rewards)
 
     actor_critic = get_cache_loaded_a2c(sess, N_ENVS, N_STEPS, ob_space, ac_space)
     env_model = get_cache_loaded_env_model(sess, ob_space, num_actions)
@@ -99,19 +99,27 @@ class ImaginedNode(object):
     def add_child(self, obj):
         self.children.append(obj)
 
-def search_node(root, base_state):
+def search_node(root, unsafe_state, debug=False):
     if(root is not None):
-        #print(root.imagined_state.reshape(nc, nw, nh))
         imagined_state = copy.deepcopy(root.imagined_state)
         imagined_state = imagined_state.reshape(nc, nw, nh)
-        imagined_state[np.where(imagined_state == 2.0)] = 1.0
-        if(np.array_equal(imagined_state, base_state) and root.imagined_reward != END_REWARD):
+        index = np.where(imagined_state == 2.0)
+        try :
+            if(imagined_state[index[0][0], index[1][0], index[2][0] + 1] == 5.0 or 
+                imagined_state[index[0][0], index[1][0], index[2][0] - 1] == 5.0):
+                imagined_state[index] = 5.0
+            else : 
+                imagined_state[index] = 1.0
+        except:
             return True
+        # NOTE : Check if it ends with a safe state
+        if(np.array_equal(imagined_state, unsafe_state) and root.children == [None, None, None, None]):
+            return False
         for child in root.children:
-            found = search_node(child, base_state)
-            if(found == True):
+            found = search_node(child, unsafe_state, debug=debug)
+            if(found == False):
                 return found
-    return False
+    return True
 
 def generate_tree(sess, state, reward=-1, count=0):
     # TODO : Recursion count 1, allow END REWARD
@@ -171,7 +179,7 @@ def get_node(root, state):
     return None
 
 def act_safely(sess):
-    env = GridworldEnv("side_effects_sokoban")
+    env = GridworldEnv("conveyor_belt")
     num_actions = ac_space.n
     num_rewards = len(conveyer_rewards)
 
@@ -198,7 +206,7 @@ def act_safely(sess):
         if(DEBUG):
             print("-- Current State --")
             print(state)
-        if(is_end == False and search_node(next_node, base_state) == False):
+        if(is_end == False and search_node(next_node, base_state) == True):
             old_action = CONTROLS[actions[0]]
             actions = safe_action(actor_critic, tree, base_state, actions[0])
             if(DEBUG):
@@ -212,20 +220,20 @@ def act_safely(sess):
 
 def plot_predictions(sess):
 
-    BAD_STATES = [np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.],
-                           [0.0, 1.0, 1.0, 0.0, 0.0, 0.],
-                           [0.0, 1.0, 1.0, 1.0, 1.0, 0.],
-                           [0.0, 0.0, 4.0, 1.0, 2.0, 0.],
-                           [0.0, 0.0, 0.0, 1.0, 5.0, 0.],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.]]),
-               np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.],
-                           [0.0, 1.0, 1.0, 0.0, 0.0, 0.],
-                           [0.0, 1.0, 1.0, 1.0, 1.0, 0.],
-                           [0.0, 0.0, 4.0, 1.0, 1.0, 0.],
-                           [0.0, 0.0, 0.0, 2.0, 5.0, 0.],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.]]),]
+    BAD_STATES = [np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                           [0.0, 1.0, 1.0, 0.0, 0.0, 0.0],
+                           [0.0, 1.0, 1.0, 1.0, 1.0, 0.0],
+                           [0.0, 0.0, 4.0, 1.0, 2.0, 0.0],
+                           [0.0, 0.0, 0.0, 1.0, 5.0, 0.0],
+                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]),
+               np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                           [0.0, 1.0, 1.0, 0.0, 0.0, 0.0],
+                           [0.0, 1.0, 1.0, 1.0, 1.0, 0.0],
+                           [0.0, 0.0, 4.0, 1.0, 1.0, 0.0],
+                           [0.0, 0.0, 0.0, 2.0, 5.0, 0.0],
+                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]),]
 
-    env = GridworldEnv("side_effects_sokoban")
+    env = GridworldEnv("conveyor_belt")
     num_actions = ac_space.n
     nc, nw, nh = ob_space
     num_rewards = len(conveyer_rewards)
@@ -294,29 +302,37 @@ if __name__ == '__main__':
     # TREEEEEE lol
     
     state = envs.reset()
-    base_state = np.copy(state)
+    base_state = np.array([[[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                            [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0],
+                            [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0],
+                            [0.0, 5.0, 5.0, 5.0, 5.0, 4.0, 0.0],
+                            [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0],
+                            [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0],
+                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]])
     base_state = base_state.reshape(nc, nw, nh)
-    base_state[np.where(base_state == 2.0)] = 1.0
     print(base_state)
 
     print("=> Generating Tree")
-    node = generate_tree(sess, ob_np)
-
+    root = generate_tree(sess, ob_np)
+    node = copy.deepcopy(root)
+    path = [1, 1, 2, 1, 1, 3, 0, 0, 0, 0, 1, 0]
 
     count = 0
     done = False
+    debug = False
     while(done != True):
         next_node = node.children[path[count]]
         print("-- Current State --")
         print(state)
-        if(search_node(next_node, base_state) == False):
+        search = search_node(next_node, base_state, debug=debug)
+        if(search == False):
             print("Unsafe Action : ", CONTROLS[path[count]])
-        _ = input(" ")
         state, _, done, _ = env.step(path[count])
         #env.render("human", imagined_state, node.imagined_reward)
-        node = node.children[path[count]]
+        #print(node.imagined_state.reshape(nc, nw, nh))
+        node = get_node(root, node.children[path[count]].imagined_state)
         count += 1
-    '''
+
     '''
     # NOT-SO-TREEEEE lolol
     imagined_states, imagined_rewards = generate_trajectory(sess, ob_np)
