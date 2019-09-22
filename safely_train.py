@@ -14,10 +14,10 @@ from safe_grid_gym.envs.gridworlds_env import GridworldEnv
 from utils import SubprocVecEnv
 from discretize_env import CONTROLS
 from a2c import CnnPolicy, get_actor_critic
-from trajectory import generate_tree, search_node
+from trajectory import *
 
 ENV_NAME = "side_effects_sokoban"
-N_ENVS = 16
+N_ENVS = 1
 N_STEPS = 9
 END_REWARD = 49
 S_ALPHAS =  [0.1, 0.3, 1.0, 2.0, 3.0, 10.0, 30.0, 100.0, 300.0]
@@ -31,7 +31,7 @@ EARLY_STOP_THRESH = 1.5
 
 # Total number of iterations (taking into account number of environments and
 # number of steps). You wish to train for.
-TOTAL_TIMESTEPS = int(2e6)
+TOTAL_TIMESTEPS = int(500)
 
 GAMMA = 0.99
 
@@ -56,35 +56,30 @@ def make_env():
 
     return _thunk
 
-def is_safe(trees, actions, base_state, dones):
-    penal = []
-    for i in range(len(actions)):
-        if(dones[i] == True):
-            penal.append(1)
-            continue
-        a = actions[i]
-        next_node = trees[i].children[a]
-        safe = search_node(next_node, base_state)
-        if(next_node is not None and next_node.imagined_reward == END_REWARD):
-            safe = True
-        penal.append(int(safe))
-        if(next_node is not None):
-            trees[i] = next_node
-    return penal, trees
+def a2c_safe_action(tree, action, base_state, actor_critic):
+    is_end = False
+    try :
+        next_node = tree.children[action[0]]
+        is_end = next_node.imagined_reward == END_REWARD
+    except AttributeError:
+        next_node = None
+    if(is_end == False and search_node(next_node, base_state) == False):
+        try:
+            action = safe_action(actor_critic, tree, base_state, action[0])
+        except:
+            pass
+    return action
 
 
-def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=None, log_path = './logs'):
-    envs = [make_env() for i in range(N_ENVS)]
-    envs = SubprocVecEnv(envs)
+def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=None, log_path = './logs', safety=True):
+    envs = make_env()() #for i in range(N_ENVS)]
+    #envs = SubprocVecEnv(envs)
+    with open("./unsafe_state_count_{}.txt".format(safety), "w+") as f:
+        pass
 
     ob_space = envs.observation_space.shape
     nc, nw, nh = ob_space
     ac_space = envs.action_space
-
-    obs = envs.reset()
-    ob_np = np.copy(obs)
-    ob_np = np.squeeze(ob_np, axis=1)
-    ob_np = np.expand_dims(ob_np, axis=3)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -100,49 +95,48 @@ def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=
     sess.run(tf.global_variables_initializer())
 
     batch_ob_shape = (N_ENVS * N_STEPS, nw, nh, nc)
-
-    dones = [False for _ in range(N_ENVS)]
-    nbatch = N_ENVS * N_STEPS
-
-    episode_rewards = np.zeros((N_ENVS, ))
-    final_rewards   = np.zeros((N_ENVS, ))
+    dones = False #for _ in range(N_ENVS)]
+    nbatch =  N_STEPS # * N_Envs
+    episode_rewards = np.zeros((1, ))
+    final_rewards   = np.zeros((1, ))
+    last_rews = [0] * REW_HIST
 
     # Safety part
-    state = ob_np[0, :, :, :]
-
-    base_state = copy.deepcopy(state).reshape(nc, nw, nh)
+    obs = envs.reset()
+    ob_np = obs.reshape(nc, nw, nh)
+    
+    base_state = copy.deepcopy(ob_np).reshape(nc, nw, nh)
     base_state[np.where(base_state == 2.0)] = 1.0
     print(base_state)
+    base_tree = generate_tree(sess, ob_np)
 
-    base_tree = generate_tree(sess, state)
-    last_rews = [0] * REW_HIST
     for update in tqdm(range(load_count + 1, TOTAL_TIMESTEPS + 1)):
         # mb stands for mini batch
-        trees = [copy.deepcopy(base_tree)] * N_ENVS
+        unsafe_state_count = 0
+        tree = copy.deepcopy(base_tree)
         mb_obs, mb_rewards, mb_actions, mb_values, mb_dones = [],[],[],[],[]
+        
         for n in range(N_STEPS):
-            ob_np = np.copy(obs)
-            ob_np = np.squeeze(ob_np, axis=1)
-            ob_np = np.expand_dims(ob_np, axis=3)
+            ob_np = obs.reshape(nc, nw, nh)
 
-            '''
-            for i in range(len(dones)):
-                if(dones[i] == True):
-                    trees[i] = copy.deepcopy(base_tree)
-            '''
+            unsafe_state = ob_np.reshape(nw, nh) 
+            x, y = np.where(unsafe_state == 4.0)
+            if(x == 3 and y == 2):
+                unsafe_state_count += 1
 
             if(update % LOG_INTERVAL == 0 and DEBUG == True):
-                print_obs = ob_np[0, :, :, :].reshape(nc, nw, nh)
                 print("-- State ---")
-                print(print_obs)
+                print(ob_np)
                 print("-- Imagined State --")
-                print(trees[0].imagined_state.reshape(nc, nw, nh))
+                print(tree.imagined_state.reshape(nc, nw, nh))
 
-            actions, values, _ = actor_critic.act(ob_np)
-            safe, trees = is_safe(trees, actions, base_state, dones)
+            ac_ob = ob_np.reshape(1, nw, nh, nc)
+            actions, values, _ = actor_critic.act(ac_ob)
+            if(safety):
+                actions = a2c_safe_action(tree, actions, base_state, actor_critic)
 
             mb_obs.append(ob_np)
-            mb_actions.append(actions)
+            mb_actions.append(actions[0])
             mb_values.append(values)
             mb_dones.append(dones)
 
@@ -150,40 +144,50 @@ def train(policy, save_name, s_alpha, load_count = 0, summarize=True, load_path=
                 print("Action : ", CONTROLS[actions[0]], " - Safe :", bool(safe[0])," - Done : ", dones[0])
                 _ = input("")
 
-            obs, rewards, dones, _ = envs.step(actions)
+            obs, rewards, dones, _ = envs.step(actions[0])
+            ob_np = ob_np.reshape(nc, nw, nh)
+            
+            tree = get_node(base_tree, ob_np) 
 
-            rewards = [rewards[i] - s_alpha * (1 - safe[i]) for i in range(len(rewards))]
+            #rewards = [rewards[i] - s_alpha * (1 - safe[i]) for i in range(len(rewards))]
             episode_rewards += rewards
-            masks = 1 - np.array(dones)
+            masks = 1 - int(dones)
             final_rewards *= masks
             final_rewards += (1 - masks) * episode_rewards
             episode_rewards *= masks
 
             mb_rewards.append(rewards)
 
+        with open("./unsafe_state_count_{}.txt".format(safety), "a+") as f:
+            f.write("{}\n".format(unsafe_state_count))
+            unsafe_state_count = 0
+
         mb_dones.append(dones)
         obs = envs.reset()
+        tree = copy.deepcopy(base_tree)
 
         #batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=np.float32).reshape(batch_ob_shape) #.swapaxes(1, 0).reshape(batch_ob_shape)
-        mb_rewards = np.asarray(mb_rewards, dtype=np.float32).swapaxes(1, 0)
-        mb_actions = np.asarray(mb_actions, dtype=np.int32).swapaxes(1, 0)
-        mb_values = np.asarray(mb_values, dtype=np.float32).swapaxes(1, 0)
-        mb_dones = np.asarray(mb_dones, dtype=np.bool).swapaxes(1, 0)
-        mb_masks = mb_dones[:, :-1]
-        mb_dones = mb_dones[:, 1:]
+        mb_rewards = np.asarray(mb_rewards, dtype=np.float32)#.swapaxes(1, 0)
+        mb_actions = np.asarray(mb_actions, dtype=np.int32)#.swapaxes(1, 0)
+        mb_values = np.asarray(mb_values, dtype=np.float32)#.swapaxes(1, 0)
+        mb_dones = np.asarray(mb_dones, dtype=np.bool)#.swapaxes(1, 0)
+        mb_masks = mb_dones[:-1]
+        mb_dones = mb_dones[1:]
 
-        last_values = actor_critic.critique(ob_np).tolist()
+        ac_ob = ob_np.reshape(1, nw, nh, nc)
+        last_values = actor_critic.critique(ac_ob).tolist()
 
         #discount/bootstrap off value fn
-        for n, (rewards, d, value) in enumerate(zip(mb_rewards, mb_dones, last_values)):
-            rewards = rewards.tolist()
-            d = d.tolist()
-            if d[-1] == 0:
-                rewards = discount_with_dones(rewards+[value], d+[0], GAMMA)[:-1]
-            else:
-                rewards = discount_with_dones(rewards, d, GAMMA)
-            mb_rewards[n] = rewards
+        #for n, (rewards, value) in enumerate(zip(mb_rewards, last_values)):
+        rewards = mb_rewards.tolist()
+        d = mb_dones.tolist()
+        value = last_values
+        if d[-1] == 0:
+            rewards = discount_with_dones(rewards+value, d+[0], GAMMA)[:-1]
+        else:
+            rewards = discount_with_dones(rewards, d, GAMMA)
+        mb_rewards = np.array(rewards)
 
         mb_rewards = mb_rewards.flatten()
         mb_actions = mb_actions.flatten()
